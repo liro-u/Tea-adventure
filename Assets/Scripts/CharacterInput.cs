@@ -1,9 +1,10 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(CharacterMovement))]
 [RequireComponent(typeof(CharacterCamera))]
-public class CharacterInput : MonoBehaviour
+public class CharacterInput : NetworkBehaviour
 {
     private InputSystem input;
 
@@ -18,6 +19,15 @@ public class CharacterInput : MonoBehaviour
         characterMovement = GetComponent<CharacterMovement>();
         characterCamera = GetComponent<CharacterCamera>();
 
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        if (!IsOwner)
+        {
+            enabled = false;
+            return;
+        }
 
         // Movement input
         input.Player.Move.performed += OnMovementInput;
@@ -29,6 +39,8 @@ public class CharacterInput : MonoBehaviour
         // Look input
         input.Player.Look.performed += OnLookInput;
         input.Player.Look.canceled += OnLookInput;
+
+        input.Player.Enable();
     }
 
     private void OnMovementInput(InputAction.CallbackContext context)
@@ -46,7 +58,9 @@ public class CharacterInput : MonoBehaviour
         characterCamera.SetLookInput(context.ReadValue<Vector2>());
     }
 
-    private void OnEnable() => input.Player.Enable();
-    private void OnDisable() => input.Player.Disable();
-
+    private void OnDisable()
+    {
+        if (IsOwner)
+            input.Player.Disable();
+    }
 }

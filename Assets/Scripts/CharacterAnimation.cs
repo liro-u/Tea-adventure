@@ -1,6 +1,7 @@
+using Unity.Netcode;
 using UnityEngine;
 
-public class CharacterAnimation : MonoBehaviour
+public class CharacterAnimation : NetworkBehaviour
 {
     [Header("Movement")]
     [SerializeField] private float rotationSmoothTime = 0.1f;
@@ -13,7 +14,7 @@ public class CharacterAnimation : MonoBehaviour
     [SerializeField] private string movingBoolName = "moving";
     [SerializeField] private string runningBoolName = "running";
 
-    public Animator animator;
+    public Animator animator { private get; set; }
     
     private float rotationVelocity;
 
@@ -26,11 +27,9 @@ public class CharacterAnimation : MonoBehaviour
 
     private void HandleRotation()
     {
-        if (!characterMovement.IsMoving) return;
+        if (!characterMovement.GetCurrentState().IsMoving) return;
 
-        if (characterMovement.MoveVelocity.sqrMagnitude < 0.01f) return;
-
-        float targetAngle = Mathf.Atan2(characterMovement.MoveVelocity.x, characterMovement.MoveVelocity.z) * Mathf.Rad2Deg;
+        float targetAngle = Mathf.Atan2(characterMovement.GetCurrentState().Displacement.x, characterMovement.GetCurrentState().Displacement.z) * Mathf.Rad2Deg;
         float smoothAngle = Mathf.SmoothDampAngle(meshTransform.eulerAngles.y, targetAngle, ref rotationVelocity, rotationSmoothTime);
         meshTransform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
     }
@@ -40,7 +39,7 @@ public class CharacterAnimation : MonoBehaviour
         if (animator == null)
             return;
 
-        animator.SetBool(movingBoolName, characterMovement.IsMoving);
-        animator.SetBool(runningBoolName, characterMovement.IsRunning);
+        animator.SetBool(movingBoolName, characterMovement.GetCurrentState().IsMoving);
+        animator.SetBool(runningBoolName, characterMovement.GetCurrentState().IsRunning);
     }
 }

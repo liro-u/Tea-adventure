@@ -1,11 +1,13 @@
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Windows;
 
-public class CharacterCamera : MonoBehaviour
+public class CharacterCamera : NetworkBehaviour
 {
     [Header("Look")]
     [SerializeField] private Transform cameraPivot;
+    [SerializeField] private GameObject TPSCamera;
 
     [SerializeField] private float lookSensitivity = 120f;
     [SerializeField] private float minPitch = -40f;
@@ -15,6 +17,12 @@ public class CharacterCamera : MonoBehaviour
 
     private float yaw;
     private float pitch;
+
+    public override void OnNetworkSpawn()
+    {
+        if (IsOwner) return;
+        TPSCamera.SetActive(false);
+    }
 
     public void SetLookInput(Vector2 input)
     {

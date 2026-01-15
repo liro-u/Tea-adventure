@@ -6,7 +6,7 @@ public class TriggerZone : MonoBehaviour
 {
     [Header("Trigger")]
     [SerializeField] private string targetTag = "Player";
-    [SerializeField] private UnityEvent onPlayerEnter;
+    [SerializeField] public UnityEvent<Collider> OnEnter;
 
     private void Reset()
     {
@@ -17,11 +17,9 @@ public class TriggerZone : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("here");
         if (!other.CompareTag(targetTag))
             return;
 
-        Debug.Log("here 2");
-        onPlayerEnter?.Invoke();
+        OnEnter?.Invoke(other);
     }
 }
