@@ -2,16 +2,12 @@ using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Windows;
 
 public interface ITickPayload
 {
     int Tick { get; set; }
 }
 
-
-[GenerateSerializationForGenericParameter(0)]
-[GenerateSerializationForGenericParameter(1)]
 public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : NetworkBehaviour
     where TInput : struct, ITickPayload
     where TState : struct, ITickPayload
@@ -58,12 +54,24 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
         if (!IsOwner && !IsServer)
             return;
 
+        if (tickDelta <= 0f) throw new InvalidOperationException(
+            $"{nameof(ClientPredictionNetworkBehaviour<TInput, TState>)}: tickDelta is {tickDelta}. " +
+            "OnNetworkSpawn() was not called or base.OnNetworkSpawn() was skipped."
+        );
+
         while (tickTimer >= tickDelta)
         {
             tickTimer -= tickDelta;
             Tick();
             currentTick++;
         }
+    }
+
+    public TState GetPrevState(int tick)
+    {
+        int prevIndex = (tick - 1 + BUFFER_SIZE) % BUFFER_SIZE;
+        TState prevState = stateBuffer[prevIndex];
+        return prevState;
     }
 
     private void Tick()

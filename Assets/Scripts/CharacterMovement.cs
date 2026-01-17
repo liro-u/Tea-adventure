@@ -1,8 +1,5 @@
 using UnityEngine;
 using Unity.Netcode;
-using System;
-using UnityEngine.Windows;
-using UnityEngine.Splines;
 
 public struct MoveInputPayload : ITickPayload, INetworkSerializeByMemcpy
 {
@@ -12,7 +9,7 @@ public struct MoveInputPayload : ITickPayload, INetworkSerializeByMemcpy
     public bool Run;
 }
 
-public struct MovementStatePayload : ITickPayload, INetworkSerializeByMemcpy
+public struct MoveStatePayload : ITickPayload, INetworkSerializeByMemcpy
 {
     public int Tick { get; set; }
     public Vector3 Position;
@@ -26,7 +23,9 @@ public struct MovementStatePayload : ITickPayload, INetworkSerializeByMemcpy
 
 
 [RequireComponent(typeof(CharacterController))]
-public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPayload, MovementStatePayload>
+[GenerateSerializationForType(typeof(MoveInputPayload))]
+[GenerateSerializationForType(typeof(MoveStatePayload))]
+public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPayload, MoveStatePayload>
 {
     [Header("Movement")]
     [SerializeField] private float walkSpeed = 1.5f;
@@ -73,7 +72,7 @@ public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPaylo
     }
 
 
-    protected override bool ReconciliationNeeded(MovementStatePayload latestServerState, MovementStatePayload matchingClientState)
+    protected override bool ReconciliationNeeded(MoveStatePayload latestServerState, MoveStatePayload matchingClientState)
     {
         float error = Vector3.Distance(
             latestServerState.Position,
@@ -93,11 +92,11 @@ public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPaylo
         };
     }
 
-    protected override MovementStatePayload Simulate(MoveInputPayload input)
+    protected override MoveStatePayload Simulate(MoveInputPayload input)
     {
 
         int prevIndex = (input.Tick - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-        MovementStatePayload prevState = stateBuffer[prevIndex];
+        MoveStatePayload prevState = stateBuffer[prevIndex];
 
         Vector3 currentPosition = transform.position;
         characterController.enabled = false;
@@ -146,7 +145,7 @@ public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPaylo
         transform.position = currentPosition;
         characterController.enabled = true;
 
-        return new MovementStatePayload
+        return new MoveStatePayload
         {
             Tick = input.Tick,
             Position = nextPosition,
