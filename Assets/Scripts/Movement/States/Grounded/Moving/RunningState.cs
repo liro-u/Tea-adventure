@@ -11,13 +11,13 @@ public class RunningState : MovingState
     {
         stateMachine.RawMovementStatePayload.MovementSpeedModifier = 5;
 
-        stateMachine.RawMovementInputPayload.IsRunning = false;
-
         base.Enter();
     }
 
     public override void Exit()
     {
+        stateMachine.RawMovementInputPayload.IsRunning = false;
+
         base.Exit();
     }
 

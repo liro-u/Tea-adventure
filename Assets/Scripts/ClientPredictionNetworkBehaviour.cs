@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 
 public interface ITickPayload
@@ -26,6 +27,9 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
     // Latest server state for reconciliation
     protected TState latestServerNetworkState;
+    // Latest remote input for extrapolation
+    protected TInput latestRemoteInput;
+    protected bool hasRemoteInput;
     public TState CurrentNetworkState { get; protected set; }
     protected TState lastReconciledNetworkState;
 
@@ -51,7 +55,7 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
     private void FixedUpdate()
     {
-        if (!IsOwner && !IsServer)
+        if (!IsClient && !IsServer)
             return;
 
         if (tickDelta <= 0f) throw new InvalidOperationException(
@@ -76,7 +80,7 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
     private void Tick()
     {
-        if (IsOwner)
+        if (IsClient)
         {
             Predict();
             Reconcile();
@@ -94,6 +98,8 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
                 // send authoritative state back to client
                 latestServerNetworkState = state;
                 SendNetworkStateClientRpc(state);
+
+                ForwardInputClientRpc(input);
             }
         }
     }
@@ -103,7 +109,20 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
     private void Predict() {
         int index = currentTick % BUFFER_SIZE;
 
-        TInput input = CreateInputPayload(currentTick);
+        TInput input;
+        if (IsOwner)
+        {
+            input = CreateInputPayload(currentTick);
+        }
+        else
+        {
+            if (!hasRemoteInput)
+            {
+                return;
+            }
+            input = CreateExtrapolationInputPayload(currentTick, latestRemoteInput);
+        }
+
         inputBuffer[index] = input;
 
         TState predicted = Simulate(input);
@@ -111,7 +130,10 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
         ApplyNetworkState(predicted);
 
-        SendInputServerRpc(input);
+        if (IsOwner)
+        {
+            SendInputServerRpc(input);
+        }
     }
     protected virtual void ApplyNetworkState(TState state) {
         CurrentNetworkState = state;
@@ -142,6 +164,8 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
         int tick = latestServerNetworkState.Tick + 1;
         while (tick < currentTick)
         {
+            if (!IsOwner && !hasRemoteInput)
+                break;
             int i = tick % BUFFER_SIZE;
             var predicted = Simulate(inputBuffer[i]);
             ApplyNetworkState(predicted);
@@ -168,8 +192,29 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
         latestServerNetworkState = state;
     }
 
+    [ClientRpc]
+    private void ForwardInputClientRpc(TInput input)
+    {
+        if (IsOwner)
+            return;
+
+        if (input.Tick <= latestRemoteInput.Tick)
+            return;
+
+        latestRemoteInput = input;
+        hasRemoteInput = true;
+    }
+
     // ================= SHARED =================
     protected abstract TInput CreateInputPayload(int currentTick);
+
+    protected TInput CreateExtrapolationInputPayload(int currentTick, TInput latestRemoteInput)
+    {
+        TInput extrapolationInputPayload = latestRemoteInput;
+        extrapolationInputPayload.Tick = currentTick;
+
+        return extrapolationInputPayload;
+    }
 
     protected abstract TState Simulate(TInput input);
 }
