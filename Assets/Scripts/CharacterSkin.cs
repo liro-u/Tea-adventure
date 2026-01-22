@@ -10,6 +10,7 @@ public class CharacterSkin : MonoBehaviour
 
     private GameObject currentSkin;
     private CharacterAnimation characterAnimation;
+    private MovementAnimation characterMovementAnimation;
 
     private void Awake()
     {
@@ -19,6 +20,7 @@ public class CharacterSkin : MonoBehaviour
         }
 
         characterAnimation = GetComponent<CharacterAnimation>();
+        characterMovementAnimation = GetComponent<MovementAnimation>();
         SetSkin(defaultSkin);
     }
 
@@ -51,8 +53,15 @@ public class CharacterSkin : MonoBehaviour
         else if (animatorController != null)
         {
             animator.runtimeAnimatorController = animatorController;
-            characterAnimation.animator = animator;
-            animator.applyRootMotion = applyRootMotion;
+            if (characterAnimation != null)
+            {
+                characterAnimation.animator = animator;
+            }
+            else
+            {
+                characterMovementAnimation.animator = animator;
+            }
+                animator.applyRootMotion = applyRootMotion;
         }
 
         currentSkin = newSkin;

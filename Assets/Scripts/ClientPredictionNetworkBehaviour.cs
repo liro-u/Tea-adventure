@@ -22,12 +22,12 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
     // Buffers
     protected TInput[] inputBuffer = new TInput[BUFFER_SIZE];
-    protected TState[] stateBuffer = new TState[BUFFER_SIZE];
+    protected TState[] networkStateBuffer = new TState[BUFFER_SIZE];
 
     // Latest server state for reconciliation
-    protected TState latestServerState;
-    public TState CurrentState { get; protected set; }
-    protected TState lastReconciledState;
+    protected TState latestServerNetworkState;
+    public TState CurrentNetworkState { get; protected set; }
+    protected TState lastReconciledNetworkState;
 
     // Server-side input queue
     private readonly Queue<TInput> serverInputQueue = new Queue<TInput>();
@@ -36,7 +36,7 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
     private void Awake()
     {
         inputBuffer = new TInput[BUFFER_SIZE];
-        stateBuffer = new TState[BUFFER_SIZE];
+        networkStateBuffer = new TState[BUFFER_SIZE];
     }
 
     public override void OnNetworkSpawn()
@@ -67,11 +67,11 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
         }
     }
 
-    public TState GetPrevState(int tick)
+    public TState GetPrevNetworkState(int tick)
     {
         int prevIndex = (tick - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-        TState prevState = stateBuffer[prevIndex];
-        return prevState;
+        TState prevNetworkState = networkStateBuffer[prevIndex];
+        return prevNetworkState;
     }
 
     private void Tick()
@@ -89,11 +89,11 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
                 // simulate server-side
                 TState state = Simulate(input);
-                stateBuffer[input.Tick % BUFFER_SIZE] = state;
+                networkStateBuffer[input.Tick % BUFFER_SIZE] = state;
 
                 // send authoritative state back to client
-                latestServerState = state;
-                SendStateClientRpc(state);
+                latestServerNetworkState = state;
+                SendNetworkStateClientRpc(state);
             }
         }
     }
@@ -107,44 +107,45 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
         inputBuffer[index] = input;
 
         TState predicted = Simulate(input);
-        stateBuffer[index] = predicted;
+        networkStateBuffer[index] = predicted;
 
-        ApplyState(predicted);
+        ApplyNetworkState(predicted);
 
         SendInputServerRpc(input);
     }
-    protected void ApplyState(TState state) {
-        CurrentState = state;
+    protected virtual void ApplyNetworkState(TState state) {
+        CurrentNetworkState = state;
     }
 
-    public TState GetCurrentState()
+    public TState GetCurrentNetworkState()
     {
-        return IsOwner ? CurrentState : latestServerState;
+        return IsOwner ? CurrentNetworkState : latestServerNetworkState;
     }
 
     protected void Reconcile()
     {
-        if (latestServerState.Tick == 0 ||
-            latestServerState.Tick == lastReconciledState.Tick)
+        if (latestServerNetworkState.Tick == 0 ||
+            latestServerNetworkState.Tick == lastReconciledNetworkState.Tick)
             return;
 
-        lastReconciledState = latestServerState;
+        lastReconciledNetworkState = latestServerNetworkState;
 
-        int index = latestServerState.Tick % BUFFER_SIZE;
+        int index = latestServerNetworkState.Tick % BUFFER_SIZE;
         
-        if (!ReconciliationNeeded(latestServerState, stateBuffer[index])) return;
+        if (!ReconciliationNeeded(latestServerNetworkState, networkStateBuffer[index])) return;
 
         // Rewind
-        stateBuffer[index] = latestServerState;
+        networkStateBuffer[index] = latestServerNetworkState;
+        ApplyNetworkState(latestServerNetworkState);
 
         // Replay
-        int tick = latestServerState.Tick + 1;
+        int tick = latestServerNetworkState.Tick + 1;
         while (tick < currentTick)
         {
             int i = tick % BUFFER_SIZE;
             var predicted = Simulate(inputBuffer[i]);
-            ApplyState(predicted);
-            stateBuffer[i] = predicted;
+            ApplyNetworkState(predicted);
+            networkStateBuffer[i] = predicted;
             tick++;
         }
     }
@@ -159,9 +160,12 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
     }
 
     [ClientRpc]
-    private void SendStateClientRpc(TState state)
+    private void SendNetworkStateClientRpc(TState state)
     {
-        latestServerState = state;
+        if (state.Tick <= latestServerNetworkState.Tick)
+            return;
+
+        latestServerNetworkState = state;
     }
 
     // ================= SHARED =================

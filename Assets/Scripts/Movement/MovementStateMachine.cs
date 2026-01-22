@@ -1,16 +1,35 @@
 using UnityEngine;
 using Unity.Netcode;
+using UnityEngine.InputSystem.LowLevel;
+using System;
 
 public struct MovementInputPayload : ITickPayload, INetworkSerializeByMemcpy
 {
     public int Tick { get; set; }
     public Vector2 MoveInput;
+    public Quaternion CameraPivot;
+    public bool IsRunning;
+    public bool IsJumping;
 }
 
 public struct MovementStatePayload : ITickPayload, INetworkSerializeByMemcpy
 {
     public int Tick { get; set; }
+    public MovementStateId StateId;
+
     public Vector3 Position;
+    public Vector3 Displacement;
+    public float MovementSpeedModifier;
+    public int RemainingJump;
+
+    public bool IsGrounded;
+    public bool IsMoving;
+    public bool IsStopping;
+
+    public override string ToString()
+    {
+        return $"{Tick} : {StateId.ToString()}";
+    }
 }
 
 [GenerateSerializationForType(typeof(MovementInputPayload))]
@@ -20,23 +39,39 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
     [SerializeField] public Transform cameraPivot;
     [SerializeField] public CharacterController characterController;
 
+
+    public MovementInputPayload RawMovementInputPayload;
+    public MovementStatePayload RawMovementStatePayload;
+
     public IdlingState IdlingState;
 
     public WalkingState WalkingState;
     public RunningState RunningState;
 
-    public MovementStateMachine()
+    public LightStoppingState LightStoppingState;
+    public HardStoppingState HardStoppingState;
+
+    public JumpingState JumpingState;
+
+    private void Awake()
     {
+        RawMovementStatePayload = new MovementStatePayload();
+
+
         IdlingState = new IdlingState(this);
 
         WalkingState = new WalkingState(this);
         RunningState = new RunningState(this);
+
+        LightStoppingState = new LightStoppingState(this);
+        HardStoppingState = new HardStoppingState(this);
+
+        JumpingState = new JumpingState(this);
     }
 
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
 
         ChangeState(IdlingState);
     }
@@ -52,18 +87,54 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
 
     protected override MovementInputPayload CreateInputPayload(int currentTick)
     {
-        return new MovementInputPayload
+        RawMovementInputPayload.Tick = currentTick;
+        return RawMovementInputPayload;
+    }
+
+    protected override void ApplyNetworkState(MovementStatePayload state)
+    {
+        base.ApplyNetworkState(state);
+
+        RawMovementStatePayload = state;
+        currentState = getStateById(state.StateId);
+    }
+
+    private MovementState getStateById(MovementStateId id)
+    {
+        return id switch
         {
-            Tick = currentTick,
-            MoveInput = Vector2.left,
+            MovementStateId.Idling => IdlingState,
+            MovementStateId.Running => RunningState,
+            MovementStateId.Walking => WalkingState,
+            MovementStateId.LightStopping => LightStoppingState,
+            MovementStateId.HardStopping => HardStoppingState,
+            MovementStateId.Jumping => JumpingState,
+            _ => throw new ArgumentOutOfRangeException(
+                nameof(id),
+                id,
+                "Unknown MovementStateId. Network state is invalid or desynced."
+            )
         };
     }
+
 
     private void LateUpdate()
     {
         characterController.enabled = false;
-        transform.position = Vector3.Lerp(transform.position, GetCurrentState().Position, 10 * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, GetCurrentNetworkState().Position, 10 * Time.deltaTime);
         characterController.enabled = true;
     }
 
+    void OnGUI()
+    {
+        float w = 200f, h = 40f;
+        float x = 10f, y = 30f;
+
+        float s = 10f;
+
+        GUI.Label(
+            new Rect(x, y + ((h + s) * (int)OwnerClientId), w, h / 2),
+            $"Client {OwnerClientId} : {GetCurrentNetworkState().StateId}"
+        );
+    }
 }

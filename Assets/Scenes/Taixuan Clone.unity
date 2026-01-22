@@ -6670,6 +6670,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: Bronya
       objectReference: {fileID: 0}
+    - target: {fileID: 4870552773557632513, guid: b05f6a392ad2928489d67e6f0dea129d, type: 3}
+      propertyPath: m_Controller
+      value: 
+      objectReference: {fileID: 9100000, guid: e7326f9717fbd7b4f8ab1b60ba0083c5, type: 2}
+    - target: {fileID: 4870552773557632513, guid: b05f6a392ad2928489d67e6f0dea129d, type: 3}
+      propertyPath: m_ApplyRootMotion
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 5159078012444724336, guid: b05f6a392ad2928489d67e6f0dea129d, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -8417,7 +8425,7 @@ Transform:
   m_GameObject: {fileID: 792819585}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 31.159966, y: 1.0663342, z: -25.934692}
+  m_LocalPosition: {x: 0.5, y: 1.52, z: -5.15}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

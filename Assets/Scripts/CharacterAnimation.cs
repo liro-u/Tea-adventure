@@ -27,9 +27,9 @@ public class CharacterAnimation : NetworkBehaviour
 
     private void HandleRotation()
     {
-        if (!characterMovement.GetCurrentState().IsMoving) return;
+        if (!characterMovement.GetCurrentNetworkState().IsMoving) return;
 
-        float targetAngle = Mathf.Atan2(characterMovement.GetCurrentState().Displacement.x, characterMovement.GetCurrentState().Displacement.z) * Mathf.Rad2Deg;
+        float targetAngle = Mathf.Atan2(characterMovement.GetCurrentNetworkState().Displacement.x, characterMovement.GetCurrentNetworkState().Displacement.z) * Mathf.Rad2Deg;
         float smoothAngle = Mathf.SmoothDampAngle(meshTransform.eulerAngles.y, targetAngle, ref rotationVelocity, rotationSmoothTime);
         meshTransform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
     }
@@ -39,7 +39,7 @@ public class CharacterAnimation : NetworkBehaviour
         if (animator == null)
             return;
 
-        animator.SetBool(movingBoolName, characterMovement.GetCurrentState().IsMoving);
-        animator.SetBool(runningBoolName, characterMovement.GetCurrentState().IsRunning);
+        animator.SetBool(movingBoolName, characterMovement.GetCurrentNetworkState().IsMoving);
+        animator.SetBool(runningBoolName, characterMovement.GetCurrentNetworkState().IsRunning);
     }
 }

@@ -7,7 +7,8 @@ public abstract class StateMachine<TInput, TState> : ClientPredictionNetworkBeha
     where TInput : struct, ITickPayload
     where TState : struct, ITickPayload
 {
-    protected IState<TInput, TState> currentState;
+    public IState<TInput, TState> currentState { get; protected set; }
+    public TInput currentInput { get; private set; }
 
     public void ChangeState(IState<TInput, TState> newState)
     {
@@ -21,7 +22,24 @@ public abstract class StateMachine<TInput, TState> : ClientPredictionNetworkBeha
 
     protected override TState Simulate(TInput input)
     {
-        return currentState.Simulate(input);
+        currentInput = input;
+
+        return currentState.Simulate();
+    }
+
+    public void OnAnimationEnterEvent()
+    {
+        currentState?.OnAnimationEnterEvent();
+    }
+
+    public void OnAnimationExitEvent()
+    {
+        currentState?.OnAnimationExitEvent();
+    }
+
+    public void OnAnimationTransitionEvent()
+    {
+        currentState?.OnAnimationTransitionEvent();
     }
 
     //public void OnTriggerEnter(Collider collider)

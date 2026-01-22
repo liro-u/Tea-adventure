@@ -67,7 +67,7 @@ public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPaylo
     private void LateUpdate()
     {
         characterController.enabled = false;
-        transform.position = Vector3.Lerp(transform.position, GetCurrentState().Position , interpolationSpeed * Time.deltaTime);
+        transform.position = Vector3.Lerp(transform.position, GetCurrentNetworkState().Position , interpolationSpeed * Time.deltaTime);
         characterController.enabled = true;
     }
 
@@ -95,8 +95,8 @@ public class CharacterMovement : ClientPredictionNetworkBehaviour<MoveInputPaylo
     protected override MoveStatePayload Simulate(MoveInputPayload input)
     {
 
-        int prevIndex = (input.Tick - 1 + BUFFER_SIZE) % BUFFER_SIZE;
-        MoveStatePayload prevState = stateBuffer[prevIndex];
+
+        MoveStatePayload prevState = GetPrevNetworkState(input.Tick);
 
         Vector3 currentPosition = transform.position;
         characterController.enabled = false;

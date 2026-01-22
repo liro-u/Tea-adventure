@@ -6,7 +6,7 @@ using UnityEngine.Windows;
 public class CharacterCamera : NetworkBehaviour
 {
     [Header("Look")]
-    [SerializeField] private Transform cameraPivot;
+    [SerializeField] public Transform cameraPivot;
     [SerializeField] private GameObject TPSCamera;
 
     [SerializeField] private float lookSensitivity = 120f;
