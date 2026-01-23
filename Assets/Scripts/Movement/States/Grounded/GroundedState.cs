@@ -1,4 +1,6 @@
 
+using UnityEngine;
+
 public class GroundedState : MovementState
 {
     public GroundedState(MovementStateMachine stateMachine) : base(stateMachine)
@@ -9,7 +11,7 @@ public class GroundedState : MovementState
     {
         stateMachine.RawMovementStatePayload.IsGrounded = true;
 
-        stateMachine.RawMovementStatePayload.RemainingJump = 2;
+        stateMachine.RawMovementStatePayload.RemainingJump = airborneData.JumpData.MaxConsecutiveJump;
 
         base.Enter();
     }
@@ -32,4 +34,19 @@ public class GroundedState : MovementState
 
         stateMachine.ChangeState(stateMachine.WalkingState);
     }
+
+    protected override void SimulateTick()
+    {
+        base.SimulateTick();
+    }
+
+    protected override void OnContactWithGroundExited()
+    {
+        OnFall();
+    }
+    protected virtual void OnFall()
+    {
+        //stateMachine.ChangeState(stateMachine.FallingState);
+    }
+
 }

@@ -9,7 +9,9 @@ public class RunningState : MovingState
 
     public override void Enter()
     {
-        stateMachine.RawMovementStatePayload.MovementSpeedModifier = 5;
+        stateMachine.RawMovementStatePayload.MovementSpeedModifier = groundedData.RunData.SpeedModifier;
+
+        stateMachine.RawMovementStatePayload.CurrentJumpForce = airborneData.JumpData.StrongForce;
 
         base.Enter();
     }

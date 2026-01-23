@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class StoppingState : GroundedState
 {
@@ -28,8 +29,16 @@ public class StoppingState : GroundedState
 
         if (stateMachine.RawMovementInputPayload.MoveInput != Vector2.zero)
         {
-            OnMove();
+            OnMovementStarted();
         }
+
+        if (!IsMovingHorizontally(0f))
+        {
+            return;
+        }
+
+        DecelerateHorizontally();
+
     }
 
     public override void OnAnimationTransitionEvent()
@@ -37,5 +46,10 @@ public class StoppingState : GroundedState
         base.OnAnimationTransitionEvent();
 
         stateMachine.ChangeState(stateMachine.IdlingState);
+    }
+
+    private void OnMovementStarted()
+    {
+        OnMove();
     }
 }

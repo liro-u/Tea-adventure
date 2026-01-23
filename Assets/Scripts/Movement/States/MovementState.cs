@@ -10,7 +10,8 @@ public enum MovementStateId
     Running,
     LightStopping,
     HardStopping,
-    Jumping
+    Jumping,
+    Falling,
 }
 
 public class MovementState : IState<MovementInputPayload, MovementStatePayload>
@@ -19,9 +20,15 @@ public class MovementState : IState<MovementInputPayload, MovementStatePayload>
 
     protected MovementStateMachine stateMachine;
 
+    protected readonly GroundedData groundedData;
+    protected readonly AirborneData airborneData;
+
     public MovementState(MovementStateMachine stateMachine)
     {
         this.stateMachine = stateMachine;
+
+        groundedData = stateMachine.Data.GroundedData;
+        airborneData = stateMachine.Data.AirborneData;
     }
 
     public virtual void Enter()
@@ -43,7 +50,12 @@ public class MovementState : IState<MovementInputPayload, MovementStatePayload>
         stateMachine.characterController.enabled = true;
 
         SimulateTick();
-        Move();
+        SimulatePhysicsTick();
+
+        stateMachine.characterController.Move(stateMachine.RawMovementStatePayload.Velocity);
+        stateMachine.RawMovementStatePayload.Position = stateMachine.transform.position;
+
+        SimulateAfterMoveTick();
 
         stateMachine.characterController.enabled = false;
         stateMachine.transform.position = currentPosition;
@@ -66,6 +78,24 @@ public class MovementState : IState<MovementInputPayload, MovementStatePayload>
         }
     }
 
+    protected virtual void SimulatePhysicsTick()
+    {
+        Move();
+    }
+
+    protected virtual void SimulateAfterMoveTick()
+    {
+        if (stateMachine.characterController.isGrounded && !stateMachine.RawMovementStatePayload.IsGrounded)
+        {
+            OnContactWithGround();
+        }
+
+        else if (!stateMachine.characterController.isGrounded && stateMachine.RawMovementStatePayload.IsGrounded)
+        {
+            OnContactWithGroundExited();
+        }
+    }
+
     protected virtual void OnMoveCanceled()
     {
     }
@@ -80,24 +110,64 @@ public class MovementState : IState<MovementInputPayload, MovementStatePayload>
 
     protected void Move()
     {
+        if (stateMachine.RawMovementInputPayload.MoveInput == Vector2.zero || stateMachine.RawMovementStatePayload.MovementSpeedModifier == 0f)
+        {
+            return;
+        }
+
         // Horizontal movement
         Vector3 movementInputDirection = GetMovementInputDirection(stateMachine.currentInput);
 
-        Vector3 worldMovementDirection = LocalToCameraDirection(movementInputDirection, stateMachine.currentInput.CameraPivot);
+        stateMachine.RawMovementStatePayload.TargetDirection = LocalToCameraDirection(movementInputDirection, stateMachine.currentInput.CameraPivot);
 
-        Vector3 horizontalVelocity = worldMovementDirection * stateMachine.RawMovementStatePayload.MovementSpeedModifier;
+        float movementSpeed = groundedData.BaseSpeed * stateMachine.RawMovementStatePayload.MovementSpeedModifier * stateMachine.tickDelta;
 
-        Vector3 velocity = new Vector3(
-            horizontalVelocity.x,
-            -9.8f,
-            horizontalVelocity.z
-        );
+        Vector3 currentPlayerHorizontalVelocity = GetPlayerHorizontalVelocity();
 
-        Vector3 displacement = velocity * stateMachine.tickDelta;
+        AddForce(stateMachine.RawMovementStatePayload.TargetDirection * movementSpeed - currentPlayerHorizontalVelocity, ForceMode.VelocityChange); 
+    }
 
-        stateMachine.characterController.Move(displacement);
-        stateMachine.RawMovementStatePayload.Displacement = displacement; 
-        stateMachine.RawMovementStatePayload.Position = stateMachine.transform.position; 
+    public void AddForce(Vector3 force, ForceMode mode = ForceMode.Acceleration)
+    {
+        switch (mode)
+        {
+            case ForceMode.Force:
+            case ForceMode.Acceleration:
+                // Continuous force per tick
+                stateMachine.RawMovementStatePayload.Velocity += force * stateMachine.tickDelta;
+                break;
+            case ForceMode.Impulse:
+            case ForceMode.VelocityChange:
+                // Instant velocity change
+                stateMachine.RawMovementStatePayload.Velocity += force;
+                break;
+        }
+    }
+
+    protected Vector3 GetPlayerHorizontalVelocity()
+    {
+        Vector3 playerHorizontalVelocity = stateMachine.RawMovementStatePayload.Velocity;
+
+        playerHorizontalVelocity.y = 0f;
+
+        return playerHorizontalVelocity;
+    }
+
+    protected Vector3 GetPlayerVerticalVelocity()
+    {
+        return new Vector3(0f, stateMachine.RawMovementStatePayload.Velocity.y, 0f);
+    }
+
+    protected void ResetVerticalVelocity()
+    {
+        Vector3 playerHorizontalVelocity = GetPlayerHorizontalVelocity();
+
+        stateMachine.RawMovementStatePayload.Velocity = playerHorizontalVelocity;
+    }
+
+    protected void ResetVelocity()
+    {
+        stateMachine.RawMovementStatePayload.Velocity = Vector3.zero;
     }
 
     protected Vector3 GetMovementInputDirection(MovementInputPayload input)
@@ -118,6 +188,39 @@ public class MovementState : IState<MovementInputPayload, MovementStatePayload>
         return worldMovementDirection;
     }
 
+    protected bool IsMovingHorizontally(float minimumMagnitude = 0.1f)
+    {
+        Vector3 playerHorizontaVelocity = GetPlayerHorizontalVelocity();
+
+        Vector2 playerHorizontalMovement = new Vector2(playerHorizontaVelocity.x, playerHorizontaVelocity.z);
+
+        return playerHorizontalMovement.magnitude > minimumMagnitude;
+    }
+
+    protected bool IsMovingUp(float minimumVelocity = 0.1f)
+    {
+        return GetPlayerVerticalVelocity().y > minimumVelocity;
+    }
+
+    protected bool IsMovingDown(float minimumVelocity = 0.1f)
+    {
+        return GetPlayerVerticalVelocity().y < -minimumVelocity;
+    }
+
+    protected void DecelerateHorizontally()
+    {
+        Vector3 playerHorizontalVelocity = GetPlayerHorizontalVelocity();
+
+        AddForce(-playerHorizontalVelocity * stateMachine.RawMovementStatePayload.MovementDecelerationForce, ForceMode.Acceleration);
+    }
+
+    protected void DecelerateVertically()
+    {
+        Vector3 playerVerticalVelocity = GetPlayerVerticalVelocity();
+
+        AddForce(-playerVerticalVelocity * stateMachine.RawMovementStatePayload.MovementDecelerationForce, ForceMode.Acceleration);
+    }
+
     public virtual void OnAnimationEnterEvent()
     {
     }
@@ -127,6 +230,14 @@ public class MovementState : IState<MovementInputPayload, MovementStatePayload>
     }
 
     public virtual void OnAnimationTransitionEvent()
+    {
+    }
+
+    protected virtual void OnContactWithGround()
+    {
+    }
+
+    protected virtual void OnContactWithGroundExited()
     {
     }
 }

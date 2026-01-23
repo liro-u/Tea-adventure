@@ -11,7 +11,11 @@ public class IdlingState : GroundedState
     {
         stateMachine.RawMovementStatePayload.MovementSpeedModifier = 0;
 
+        stateMachine.RawMovementStatePayload.CurrentJumpForce = airborneData.JumpData.StationaryForce;
+
         base.Enter();
+
+        ResetVelocity();
     }
 
     public override void Exit()
@@ -29,5 +33,17 @@ public class IdlingState : GroundedState
         }
 
         OnMove();
+    }
+
+    protected override void SimulatePhysicsTick()
+    {
+        base.SimulatePhysicsTick();
+
+        if (!IsMovingHorizontally())
+        {
+            return;
+        }
+
+        ResetVelocity();
     }
 }

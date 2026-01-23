@@ -33,7 +33,7 @@ public class MovementAnimation : NetworkBehaviour
     {
         if (!characterMovementStateMachine.GetCurrentNetworkState().IsMoving) return;
 
-        float targetAngle = Mathf.Atan2(characterMovementStateMachine.GetCurrentNetworkState().Displacement.x, characterMovementStateMachine.GetCurrentNetworkState().Displacement.z) * Mathf.Rad2Deg;
+        float targetAngle = Mathf.Atan2(characterMovementStateMachine.GetCurrentNetworkState().Velocity.x, characterMovementStateMachine.GetCurrentNetworkState().Velocity.z) * Mathf.Rad2Deg;
         float smoothAngle = Mathf.SmoothDampAngle(meshTransform.eulerAngles.y, targetAngle, ref rotationVelocity, rotationSmoothTime);
         meshTransform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
     }

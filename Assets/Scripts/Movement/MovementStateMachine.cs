@@ -18,9 +18,13 @@ public struct MovementStatePayload : ITickPayload, INetworkSerializeByMemcpy
     public MovementStateId StateId;
 
     public Vector3 Position;
-    public Vector3 Displacement;
+    public Vector3 Velocity;
+    public Vector3 TargetDirection;
+
     public float MovementSpeedModifier;
+    public float MovementDecelerationForce;
     public int RemainingJump;
+    public Vector3 CurrentJumpForce;
 
     public bool IsGrounded;
     public bool IsMoving;
@@ -38,6 +42,8 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
 {
     [SerializeField] public Transform cameraPivot;
     [SerializeField] public CharacterController characterController;
+    [SerializeField] public MovementSO Data;
+
 
 
     public MovementInputPayload RawMovementInputPayload;
@@ -52,10 +58,12 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
     public HardStoppingState HardStoppingState;
 
     public JumpingState JumpingState;
+    public FallingState FallingState;
 
     private void Awake()
     {
         RawMovementStatePayload = new MovementStatePayload();
+        RawMovementStatePayload.TargetDirection = Vector3.forward;
 
 
         IdlingState = new IdlingState(this);
@@ -67,6 +75,7 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
         HardStoppingState = new HardStoppingState(this);
 
         JumpingState = new JumpingState(this);
+        FallingState = new FallingState(this);
     }
 
     public override void OnNetworkSpawn()
@@ -109,6 +118,7 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
             MovementStateId.LightStopping => LightStoppingState,
             MovementStateId.HardStopping => HardStoppingState,
             MovementStateId.Jumping => JumpingState,
+            MovementStateId.Falling => FallingState,
             _ => throw new ArgumentOutOfRangeException(
                 nameof(id),
                 id,
@@ -120,21 +130,14 @@ public class MovementStateMachine : StateMachine<MovementInputPayload, MovementS
 
     private void LateUpdate()
     {
+        Debuger.Instance.Add($"Client {OwnerClientId} : {GetCurrentNetworkState().StateId}");
+        Debuger.Instance.Add($"Position : {GetCurrentNetworkState().Position}");
+        Debuger.Instance.Add($"Velocity : {GetCurrentNetworkState().Velocity}");
+        Debuger.Instance.Add($"CurrentJumpForce : {GetCurrentNetworkState().CurrentJumpForce}");
+
         characterController.enabled = false;
         transform.position = Vector3.Lerp(transform.position, GetCurrentNetworkState().Position, 10 * Time.deltaTime);
         characterController.enabled = true;
     }
 
-    void OnGUI()
-    {
-        float w = 200f, h = 40f;
-        float x = 10f, y = 30f;
-
-        float s = 10f;
-
-        GUI.Label(
-            new Rect(x, y + ((h + s) * (int)OwnerClientId), w, h / 2),
-            $"Client {OwnerClientId} : {GetCurrentNetworkState().StateId}"
-        );
-    }
 }
