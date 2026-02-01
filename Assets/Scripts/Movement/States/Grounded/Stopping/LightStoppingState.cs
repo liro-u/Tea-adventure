@@ -11,8 +11,8 @@ public class LightStoppingState : StoppingState
     {
         base.Enter();
 
-        stateMachine.RawMovementStatePayload.MovementDecelerationForce = groundedData.StopData.LightDecelerationForce;
+        stateMachine.RawStatePayload.MovementDecelerationForce = groundedData.StopData.LightDecelerationForce;
 
-        stateMachine.RawMovementStatePayload.CurrentJumpForce = airborneData.JumpData.WeakForce;
+        stateMachine.RawStatePayload.CurrentJumpForce = airborneData.JumpData.WeakForce;
     }
 }

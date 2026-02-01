@@ -11,9 +11,9 @@ public class HardStoppingState : StoppingState
     {
         base.Enter();
 
-        stateMachine.RawMovementStatePayload.MovementDecelerationForce = groundedData.StopData.HardDecelerationForce;
+        stateMachine.RawStatePayload.MovementDecelerationForce = groundedData.StopData.HardDecelerationForce;
 
-        stateMachine.RawMovementStatePayload.CurrentJumpForce = airborneData.JumpData.StrongForce;
+        stateMachine.RawStatePayload.CurrentJumpForce = airborneData.JumpData.StrongForce;
     }
 
     public override void OnAnimationTransitionEvent()

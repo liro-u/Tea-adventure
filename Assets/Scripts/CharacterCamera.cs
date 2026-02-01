@@ -1,27 +1,35 @@
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.Windows;
-
 public class CharacterCamera : NetworkBehaviour
 {
     [Header("Look")]
     [SerializeField] public Transform cameraPivot;
     [SerializeField] private GameObject TPSCamera;
 
-    [SerializeField] private float lookSensitivity = 120f;
+    [SerializeField] private float sensitivity = 2.5f;
     [SerializeField] private float minPitch = -40f;
     [SerializeField] private float maxPitch = 80f;
 
+    [Header("Smoothing")]
+    [SerializeField] private float smoothTime = 0.05f; // lower = snappier
+
     private Vector2 lookInput;
+
+    private float targetYaw;
+    private float targetPitch;
 
     private float yaw;
     private float pitch;
 
+    private float yawVelocity;
+    private float pitchVelocity;
+
     public override void OnNetworkSpawn()
     {
-        if (IsOwner) return;
-        TPSCamera.SetActive(false);
+        if (!IsOwner)
+            TPSCamera.SetActive(false);
     }
 
     public void SetLookInput(Vector2 input)
@@ -29,23 +37,24 @@ public class CharacterCamera : NetworkBehaviour
         lookInput = input;
     }
 
-    private void Update()
+    private void LateUpdate()
     {
+        if (!IsOwner) return;
         ApplyLook();
     }
 
     private void ApplyLook()
     {
-        if (lookInput.sqrMagnitude < 0.0001f)
-            return;
+        // Mouse delta should NOT be multiplied by deltaTime
+        targetYaw += lookInput.x * sensitivity;
+        targetPitch -= lookInput.y * sensitivity;
 
-        yaw += lookInput.x * lookSensitivity * Time.deltaTime;
-        pitch -= lookInput.y * lookSensitivity * Time.deltaTime;
+        targetPitch = Mathf.Clamp(targetPitch, minPitch, maxPitch);
 
-        pitch = Mathf.Clamp(pitch, minPitch, maxPitch);
+        // SmoothDamp = physically plausible smoothing
+        yaw = Mathf.SmoothDampAngle(yaw, targetYaw, ref yawVelocity, smoothTime);
+        pitch = Mathf.SmoothDampAngle(pitch, targetPitch, ref pitchVelocity, smoothTime);
 
-        // Camera (pitch + yaw)
         cameraPivot.localRotation = Quaternion.Euler(pitch, yaw, 0f);
     }
-
 }

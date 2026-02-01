@@ -10,9 +10,9 @@ public class WalkingState : MovingState
 
     public override void Enter()
     {
-        stateMachine.RawMovementStatePayload.MovementSpeedModifier = groundedData.WalkData.SpeedModifier;
+        stateMachine.RawStatePayload.MovementSpeedModifier = groundedData.WalkData.SpeedModifier;
 
-        stateMachine.RawMovementStatePayload.CurrentJumpForce = airborneData.JumpData.WeakForce;
+        stateMachine.RawStatePayload.CurrentJumpForce = airborneData.JumpData.WeakForce;
 
         base.Enter();
     }
@@ -23,30 +23,17 @@ public class WalkingState : MovingState
 
     }
 
-    protected override void SimulateTick()
-    {
-        base.SimulateTick();
-
-        StopWalking();
-    }
-
-    private void StopWalking()
-    {
-        if (stateMachine.currentInput.MoveInput == Vector2.zero)
-        {
-            return;
-        }
-
-        if (stateMachine.currentInput.IsRunning)
-        {
-            stateMachine.ChangeState(stateMachine.RunningState);
-
-            return;
-        }
-    }
-
     protected override void OnMoveCanceled()
     {
         stateMachine.ChangeState(stateMachine.LightStoppingState);
+
+        base.OnMoveCanceled();
+    }
+
+    protected override void OnWalkToggleStarted()
+    {
+        base.OnWalkToggleStarted();
+
+        stateMachine.ChangeState(stateMachine.RunningState);
     }
 }

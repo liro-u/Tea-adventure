@@ -14,7 +14,7 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
     where TState : struct, ITickPayload
 {
     // Tick system
-    public const float TICK_RATE = 120f;
+    public const float TICK_RATE = 50f;
     public const int BUFFER_SIZE = 1024;
 
     public float tickDelta { get; private set; }
@@ -125,10 +125,12 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
         inputBuffer[index] = input;
 
-        TState predicted = Simulate(input);
-        networkStateBuffer[index] = predicted;
-
-        ApplyNetworkState(predicted);
+        if (!(IsServer && IsOwner))
+        {
+            TState predicted = Simulate(input);
+            networkStateBuffer[index] = predicted;
+            ApplyNetworkState(predicted);
+        }
 
         if (IsOwner)
         {
@@ -141,7 +143,9 @@ public abstract class ClientPredictionNetworkBehaviour<TInput, TState> : Network
 
     public TState GetCurrentNetworkState()
     {
-        return IsOwner ? CurrentNetworkState : latestServerNetworkState;
+        return IsOwner && !IsServer
+            ? CurrentNetworkState
+            : latestServerNetworkState;
     }
 
     protected void Reconcile()

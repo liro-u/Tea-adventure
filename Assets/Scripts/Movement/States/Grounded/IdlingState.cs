@@ -9,9 +9,9 @@ public class IdlingState : GroundedState
 
     public override void Enter()
     {
-        stateMachine.RawMovementStatePayload.MovementSpeedModifier = 0;
+        stateMachine.RawStatePayload.MovementSpeedModifier = 0;
 
-        stateMachine.RawMovementStatePayload.CurrentJumpForce = airborneData.JumpData.StationaryForce;
+        stateMachine.RawStatePayload.CurrentJumpForce = airborneData.JumpData.StationaryForce;
 
         base.Enter();
 
@@ -27,7 +27,7 @@ public class IdlingState : GroundedState
     {
         base.SimulateTick();
 
-        if (stateMachine.currentInput.MoveInput == Vector2.zero)
+        if (stateMachine.currentInputPayload.MoveInput == Vector2.zero)
         {
             return;
         }

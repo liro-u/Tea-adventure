@@ -8,11 +8,18 @@ public class AirborneState : MovementState
     public override void Enter()
     {
         base.Enter();
+
+        ResetSprintState();
     }
 
     public override void Exit()
     {
         base.Exit();
+    }
+
+    protected virtual void ResetSprintState()
+    {
+        stateMachine.RawStatePayload.ShouldSprint = false;
     }
 
     protected override void SimulateTick()
@@ -30,5 +37,10 @@ public class AirborneState : MovementState
     protected void ApplyGravity()
     {
         AddForce(stateMachine.Data.AirborneData.Gravity, ForceMode.Acceleration);
+    }
+
+    protected override void OnContactWithGround()
+    {
+        stateMachine.ChangeState(stateMachine.LightLandingState);
     }
 }

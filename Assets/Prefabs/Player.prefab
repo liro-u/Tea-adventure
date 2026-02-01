@@ -98,7 +98,7 @@ MonoBehaviour:
     Enabled: 1
     CollisionFilter:
       serializedVersion: 2
-      m_Bits: 1
+      m_Bits: 8
     IgnoreTag: Player
     CameraRadius: 0.2
     DampingIntoCollision: 0
@@ -125,8 +125,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 3181820824525659251}
-  - component: {fileID: 6716818333668595442}
   - component: {fileID: 227505799671787011}
+  - component: {fileID: 1109353452028996182}
   - component: {fileID: 3167363230184686801}
   - component: {fileID: 1365731958743608250}
   - component: {fileID: 1916043221544293555}
@@ -156,31 +156,6 @@ Transform:
   - {fileID: 3003246157910854595}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!143 &6716818333668595442
-CharacterController:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457813143453879033}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Height: 1.64
-  m_Radius: 0.2
-  m_SlopeLimit: 45
-  m_StepOffset: 0.3
-  m_SkinWidth: 0.08
-  m_MinMoveDistance: 0.001
-  m_Center: {x: 0, y: 0.84, z: 0}
 --- !u!114 &227505799671787011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -206,6 +181,31 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 1
   AllowOwnerToParent: 0
+--- !u!143 &1109353452028996182
+CharacterController:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1457813143453879033}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Height: 1.6
+  m_Radius: 0.17
+  m_SlopeLimit: 45
+  m_StepOffset: 0.3
+  m_SkinWidth: 0.0001
+  m_MinMoveDistance: 0.001
+  m_Center: {x: 0, y: 0.8, z: 0}
 --- !u!114 &3167363230184686801
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,7 +220,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovementStateMachine
   ShowTopMostFoldoutHeaderGroup: 1
   cameraPivot: {fileID: 3003246157910854595}
-  characterController: {fileID: 6716818333668595442}
+  characterController: {fileID: 1109353452028996182}
   Data: {fileID: 11400000, guid: 13d343e62824d7141aff2eeb20935b0d, type: 2}
 --- !u!114 &1365731958743608250
 MonoBehaviour:
@@ -270,11 +270,16 @@ MonoBehaviour:
   characterMovementStateMachine: {fileID: 3167363230184686801}
   meshTransform: {fileID: 1793764791954224349}
   movingBoolName: moving
-  runningBoolName: running
+  shouldWalkBoolName: shouldWalk
+  shouldSprintBoolName: shouldSprint
   stoppingBoolName: stopping
+  lightStoppingBoolName: lightStopping
   hardStoppingBoolName: hardStopping
   groundedBoolName: grounded
   jumpingBoolName: jumping
+  landingBoolName: landing
+  hardLandingBoolName: hardLanding
+  rollingBoolName: rolling
   animator: {fileID: 4896512693352297544}
 --- !u!1 &8350408115712643502
 GameObject:

@@ -15,13 +15,11 @@ public class JumpingState : AirborneState
     {
         base.Enter();
 
-        stateMachine.RawMovementStatePayload.MovementSpeedModifier = 0;
+        stateMachine.RawStatePayload.MovementSpeedModifier = 0;
 
-        stateMachine.RawMovementStatePayload.MovementDecelerationForce = airborneData.JumpData.DecelerationForce;
+        stateMachine.RawStatePayload.MovementDecelerationForce = airborneData.JumpData.DecelerationForce;
 
-        stateMachine.RawMovementStatePayload.RemainingJump -= 1;
-
-        stateMachine.RawMovementInputPayload.IsJumping = false;
+        stateMachine.RawStatePayload.RemainingJump -= 1;
 
         Jump();
     }
@@ -60,11 +58,15 @@ public class JumpingState : AirborneState
         }
     }
 
+    protected override void ResetSprintState()
+    {
+    }
+
     private void Jump()
     {
-        Vector3 jumpForce = stateMachine.RawMovementStatePayload.CurrentJumpForce;
+        Vector3 jumpForce = stateMachine.RawStatePayload.CurrentJumpForce;
 
-        Vector3 jumpDirection = stateMachine.RawMovementStatePayload.TargetDirection;
+        Vector3 jumpDirection = stateMachine.RawStatePayload.TargetDirection;
 
         jumpForce.x *= jumpDirection.x;
         jumpForce.z *= jumpDirection.z;

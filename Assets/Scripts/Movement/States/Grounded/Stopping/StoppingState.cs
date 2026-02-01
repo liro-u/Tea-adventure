@@ -9,9 +9,9 @@ public class StoppingState : GroundedState
 
     public override void Enter()
     {
-        stateMachine.RawMovementStatePayload.IsStopping = true;
+        stateMachine.RawStatePayload.IsStopping = true;
 
-        stateMachine.RawMovementStatePayload.MovementSpeedModifier = 0;
+        stateMachine.RawStatePayload.MovementSpeedModifier = 0;
 
         base.Enter();
     }
@@ -20,14 +20,14 @@ public class StoppingState : GroundedState
     {
         base.Exit();
 
-        stateMachine.RawMovementStatePayload.IsStopping = false;
+        stateMachine.RawStatePayload.IsStopping = false;
     }
 
     protected override void SimulateTick()
     {
         base.SimulateTick();
 
-        if (stateMachine.RawMovementInputPayload.MoveInput != Vector2.zero)
+        if (stateMachine.currentInputPayload.MoveInput != Vector2.zero)
         {
             OnMovementStarted();
         }

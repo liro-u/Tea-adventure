@@ -14,22 +14,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovementSO
   GroundedData:
     BaseSpeed: 5
+    GroundLayer:
+      serializedVersion: 2
+      m_Bits: 8
+    GroundToFallRayDistance: 1
+    StickToGroundRayDistance: 2
+    StepReachForce: 25
     WalkData:
       SpeedModifier: 0.225
     RunData:
       SpeedModifier: 1
+    SprintData:
+      SpeedModifier: 0.264
+      SprintToRunTime: 1
+      RunToWalkTime: 1.7
     StopData:
       LightDecelerationForce: 5
       MediumDecelerationForce: 6.5
       HardDecelerationForce: 5
   AirborneData:
-    Gravity: {x: 0, y: -0.05, z: 0}
+    Gravity: {x: 0, y: -0.1, z: 0}
     JumpData:
       MaxConsecutiveJump: 2
       DecelerationForce: 1.5
-      StationaryForce: {x: 0, y: 5, z: 0}
-      WeakForce: {x: 2, y: 5, z: 2}
-      MediumForce: {x: 4, y: 5, z: 4}
-      StrongForce: {x: 6, y: 5, z: 6}
+      StationaryForce: {x: 0, y: 7, z: 0}
+      WeakForce: {x: 2, y: 7, z: 2}
+      MediumForce: {x: 4, y: 7, z: 4}
+      StrongForce: {x: 6, y: 7, z: 6}
     FallData:
       FallSpeedLimit: 10

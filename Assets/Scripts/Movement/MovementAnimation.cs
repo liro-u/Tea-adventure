@@ -12,11 +12,16 @@ public class MovementAnimation : NetworkBehaviour
 
     [Header("Animator Params")]
     [SerializeField] private string movingBoolName = "moving";
-    [SerializeField] private string runningBoolName = "running";
+    [SerializeField] private string shouldWalkBoolName = "shouldWalk";
+    [SerializeField] private string shouldSprintBoolName = "shouldSprint";
     [SerializeField] private string stoppingBoolName = "stopping";
+    [SerializeField] private string lightStoppingBoolName = "lightStopping";
     [SerializeField] private string hardStoppingBoolName = "hardStopping";
     [SerializeField] private string groundedBoolName = "grounded";
     [SerializeField] private string jumpingBoolName = "jumping";
+    [SerializeField] private string landingBoolName = "landing";
+    [SerializeField] private string hardLandingBoolName = "hardLanding";
+    [SerializeField] private string rollingBoolName = "rolling";
 
     [SerializeField] public Animator animator;
 
@@ -46,10 +51,16 @@ public class MovementAnimation : NetworkBehaviour
         animator.SetBool(groundedBoolName, characterMovementStateMachine.GetCurrentNetworkState().IsGrounded);
 
         animator.SetBool(movingBoolName, characterMovementStateMachine.GetCurrentNetworkState().IsMoving);
-        animator.SetBool(runningBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.RunningState.StateId);
+        animator.SetBool(shouldWalkBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.WalkingState.StateId);
+        animator.SetBool(shouldSprintBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.SprintingState.StateId);
 
         animator.SetBool(stoppingBoolName, characterMovementStateMachine.GetCurrentNetworkState().IsStopping);
+        animator.SetBool(lightStoppingBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.LightStoppingState.StateId);
         animator.SetBool(hardStoppingBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.HardStoppingState.StateId);
+
+        animator.SetBool(landingBoolName, characterMovementStateMachine.GetCurrentNetworkState().IsLanding);
+        animator.SetBool(hardLandingBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.HardLandingState.StateId);
+        animator.SetBool(rollingBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.RollingState.StateId);
 
         animator.SetBool(jumpingBoolName, characterMovementStateMachine.GetCurrentNetworkState().StateId == characterMovementStateMachine.JumpingState.StateId);
     }

@@ -6,7 +6,7 @@ public class MovingState : GroundedState
 
     public override void Enter()
     {
-        stateMachine.RawMovementStatePayload.IsMoving = true;
+        stateMachine.RawStatePayload.IsMoving = true;
 
         base.Enter();
     }
@@ -15,6 +15,6 @@ public class MovingState : GroundedState
     {
         base.Exit();
 
-        stateMachine.RawMovementStatePayload.IsMoving = false;
+        stateMachine.RawStatePayload.IsMoving = false;
     }
 }

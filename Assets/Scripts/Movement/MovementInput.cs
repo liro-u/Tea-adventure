@@ -33,9 +33,8 @@ public class MovementInput : NetworkBehaviour
         input.Player.Move.performed += OnMovementInput;
         input.Player.Move.canceled += OnMovementInput;
 
-        // Look input
         input.Player.Sprint.started += OnSprintInput;
-        //input.Player.Sprint.canceled += OnSprintInput;
+        input.Player.WalkToggle.started += OnWalkInput;
 
         // Look input
         input.Player.Look.performed += OnLookInput;
@@ -49,17 +48,22 @@ public class MovementInput : NetworkBehaviour
 
     private void OnMovementInput(InputAction.CallbackContext context)
     {
-        characterMovementStateMachine.RawMovementInputPayload.MoveInput = context.ReadValue<Vector2>();
+        characterMovementStateMachine.RawInputPayload.MoveInput = context.ReadValue<Vector2>();
     }
 
     private void OnSprintInput(InputAction.CallbackContext context)
     {
-        characterMovementStateMachine.RawMovementInputPayload.IsRunning = context.ReadValueAsButton();
+        characterMovementStateMachine.RawInputPayload.IsSprinting = context.ReadValueAsButton();
+    }
+
+    private void OnWalkInput(InputAction.CallbackContext context)
+    {
+        characterMovementStateMachine.RawInputPayload.IsWalkToggle = context.ReadValueAsButton();
     }
 
     private void OnJumpInput(InputAction.CallbackContext context)
     {
-        characterMovementStateMachine.RawMovementInputPayload.IsJumping = context.ReadValueAsButton();
+        characterMovementStateMachine.RawInputPayload.IsJumping = context.ReadValueAsButton();
     }
 
     private void OnLookInput(InputAction.CallbackContext context)
@@ -69,7 +73,7 @@ public class MovementInput : NetworkBehaviour
 
     private void Update()
     {
-        characterMovementStateMachine.RawMovementInputPayload.CameraPivot = characterCamera.cameraPivot.transform.rotation;
+        characterMovementStateMachine.RawInputPayload.CameraPivot = characterCamera.cameraPivot.transform.rotation;
     }
 
     private void OnDisable()
