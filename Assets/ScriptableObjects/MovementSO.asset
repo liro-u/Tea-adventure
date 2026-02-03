@@ -32,8 +32,10 @@ MonoBehaviour:
       LightDecelerationForce: 5
       MediumDecelerationForce: 6.5
       HardDecelerationForce: 5
+    RollData:
+      SpeedModifier: 1
   AirborneData:
-    Gravity: {x: 0, y: -0.1, z: 0}
+    Gravity: {x: 0, y: -9.8, z: 0}
     JumpData:
       MaxConsecutiveJump: 2
       DecelerationForce: 1.5
@@ -43,3 +45,4 @@ MonoBehaviour:
       StrongForce: {x: 6, y: 7, z: 6}
     FallData:
       FallSpeedLimit: 10
+      MinimumDistanceToBeConsideredHardFall: 3

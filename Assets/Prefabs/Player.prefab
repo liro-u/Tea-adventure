@@ -127,10 +127,7 @@ GameObject:
   - component: {fileID: 3181820824525659251}
   - component: {fileID: 227505799671787011}
   - component: {fileID: 1109353452028996182}
-  - component: {fileID: 3167363230184686801}
-  - component: {fileID: 1365731958743608250}
-  - component: {fileID: 1916043221544293555}
-  - component: {fileID: 2371489871562034182}
+  - component: {fileID: 8312487630176527302}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -206,7 +203,7 @@ CharacterController:
   m_SkinWidth: 0.0001
   m_MinMoveDistance: 0.001
   m_Center: {x: 0, y: 0.8, z: 0}
---- !u!114 &3167363230184686801
+--- !u!114 &8312487630176527302
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -215,72 +212,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 1457813143453879033}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 68a0539daa170d54f9c63c8c269ef9da, type: 3}
+  m_Script: {fileID: 11500000, guid: 8c4d89e26de80aa4e9161d9f2f7352aa, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MovementStateMachine
-  ShowTopMostFoldoutHeaderGroup: 1
-  cameraPivot: {fileID: 3003246157910854595}
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterBrain
   characterController: {fileID: 1109353452028996182}
   Data: {fileID: 11400000, guid: 13d343e62824d7141aff2eeb20935b0d, type: 2}
---- !u!114 &1365731958743608250
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457813143453879033}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 66f5e035c7c871347b37335f95d1d329, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::CharacterCamera
-  ShowTopMostFoldoutHeaderGroup: 1
+  movementAnimationEventTrigger: {fileID: 3029889022559406466}
+  animator: {fileID: 4896512693352297544}
+  meshTransform: {fileID: 1793764791954224349}
+  rotationSmoothTime: 0.1
   cameraPivot: {fileID: 3003246157910854595}
-  TPSCamera: {fileID: 1281986534333897536}
-  lookSensitivity: 120
+  sensitivity: 1
   minPitch: -40
   maxPitch: 80
---- !u!114 &1916043221544293555
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457813143453879033}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 4b664af1c5d1860489575aeb3a1e6f8e, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MovementInput
-  ShowTopMostFoldoutHeaderGroup: 1
---- !u!114 &2371489871562034182
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1457813143453879033}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bad6b19f8156865469008ab6f5f5a33a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::MovementAnimation
-  ShowTopMostFoldoutHeaderGroup: 1
-  rotationSmoothTime: 0.1
-  characterMovementStateMachine: {fileID: 3167363230184686801}
-  meshTransform: {fileID: 1793764791954224349}
-  movingBoolName: moving
-  shouldWalkBoolName: shouldWalk
-  shouldSprintBoolName: shouldSprint
-  stoppingBoolName: stopping
-  lightStoppingBoolName: lightStopping
-  hardStoppingBoolName: hardStopping
-  groundedBoolName: grounded
-  jumpingBoolName: jumping
-  landingBoolName: landing
-  hardLandingBoolName: hardLanding
-  rollingBoolName: rolling
-  animator: {fileID: 4896512693352297544}
+  smoothTime: 0.05
 --- !u!1 &8350408115712643502
 GameObject:
   m_ObjectHideFlags: 0
@@ -466,7 +411,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: -1728013695380148634, guid: b05f6a392ad2928489d67e6f0dea129d, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 8098134453418797499}
+      addedObject: {fileID: 3029889022559406466}
   m_SourcePrefab: {fileID: -3956505258223990651, guid: b05f6a392ad2928489d67e6f0dea129d, type: 3}
 --- !u!95 &4896512693352297544 stripped
 Animator:
@@ -483,7 +428,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -1728013695380148634, guid: b05f6a392ad2928489d67e6f0dea129d, type: 3}
   m_PrefabInstance: {fileID: 28224099398863433}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &8098134453418797499
+--- !u!114 &3029889022559406466
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -492,8 +437,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 7521179706958111791}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dcc9a74d942c392488b0764b50698272, type: 3}
+  m_Script: {fileID: 11500000, guid: ddf83bc315ec23f4ca533d66ad229149, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MovementAnimationEventTrigger
-  movementStateMachine: {fileID: 3167363230184686801}
   animator: {fileID: 4896512693352297544}
