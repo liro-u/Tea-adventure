@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/StartScene.unity
+    guid: 530e470103b2fe9498edb5c43c5f0d65
+  - enabled: 1
     path: Assets/Scenes/Taixuan Clone.unity
     guid: 34a198c5ce348c345a196cdbb92f9e78
   - enabled: 1
