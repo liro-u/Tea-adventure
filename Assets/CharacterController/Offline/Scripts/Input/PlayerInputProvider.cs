@@ -1,68 +1,41 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlayerInputProvider : IInputProvider<IMovementInputPayload>
 {
-    private InputSystem input;
+    private readonly InputSystem input;
+    private readonly Transform cameraPivot;
 
-    protected Transform cameraPivot;
-
-    protected MovementInputPayload inputPayload;
+    private MovementInputPayload inputPayload;
     public IMovementInputPayload InputPayload => inputPayload;
+
+    // Latched: true from the moment the key is pressed until the next Tick() consumes it.
+    // This guarantees a press is never missed even if it happens between two ticks.
+    private bool _jumpLatched;
+    private bool _walkToggleLatched;
 
     public PlayerInputProvider(Transform cameraPivot)
     {
         this.cameraPivot = cameraPivot;
 
         input = new InputSystem();
-
-        // Movement input
-        input.Player.Move.performed += OnMovementInput;
-        input.Player.Move.canceled += OnMovementInput;
-
-        input.Player.Sprint.started += OnSprintInput;
-        input.Player.Sprint.canceled += OnSprintInput;
-
-        input.Player.WalkToggle.started += OnWalkInput;
-        input.Player.WalkToggle.canceled += OnWalkInput;
-
-        // Look input
-        input.Player.Look.performed += OnLookInput;
-        input.Player.Look.canceled += OnLookInput;
-
-        input.Player.Jump.started += OnJumpInput;
-        input.Player.Jump.canceled += OnJumpInput;
-
+        input.Player.Jump.started += _ => _jumpLatched = true;
+        input.Player.WalkToggle.started += _ => _walkToggleLatched = true;
         input.Player.Enable();
-    }
-
-    private void OnMovementInput(InputAction.CallbackContext context)
-    {
-        inputPayload.MoveInput = context.ReadValue<Vector2>();
-    }
-
-    private void OnSprintInput(InputAction.CallbackContext context)
-    {
-        inputPayload.IsSprinting = context.ReadValueAsButton();
-    }
-
-    private void OnWalkInput(InputAction.CallbackContext context)
-    {
-        inputPayload.IsWalkToggle = context.ReadValueAsButton();
-    }
-
-    private void OnJumpInput(InputAction.CallbackContext context)
-    {
-        inputPayload.IsJumping = context.ReadValueAsButton();
-    }
-
-    private void OnLookInput(InputAction.CallbackContext context)
-    {
-        inputPayload.LookInput = context.ReadValue<Vector2>();
     }
 
     public void Tick(float tickDelta)
     {
+        // Continuous values — poll every tick
+        inputPayload.MoveInput = input.Player.Move.ReadValue<UnityEngine.Vector2>();
+        inputPayload.LookInput = input.Player.Look.ReadValue<UnityEngine.Vector2>();
+        inputPayload.IsSprinting = input.Player.Sprint.IsPressed();
         inputPayload.CameraPivot = cameraPivot.rotation;
+
+        // Discrete presses — consume the latch so each press registers for exactly one tick
+        inputPayload.IsJumping = _jumpLatched;
+        _jumpLatched = false;
+
+        inputPayload.IsWalkToggle = _walkToggleLatched;
+        _walkToggleLatched = false;
     }
 }
