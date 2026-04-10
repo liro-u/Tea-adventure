@@ -1,6 +1,20 @@
 using Unity.Netcode;
 using UnityEngine;
 
+/// <summary>
+/// Network wrapper around the offline movement simulation.
+///
+/// Implements IMovementBrain directly — owns the same simulation objects as CharacterBrain
+/// (motor, state machine, etc.) so all movement logic is shared without duplication.
+///
+/// Input flow:
+///   Owner  → LocalPlayerInputProvider polls input → captured as NetworkMovementInputPayload
+///           → injected into remoteInput via InjectInput() before each simulation step.
+///   Others → input arrives from the network → injected the same way.
+///
+/// This means movementInputProvider (= remoteInput) is always the simulation source,
+/// guaranteeing client predict, server processing, and reconciliation replay are identical.
+/// </summary>
 public class NetworkCharacterBrain : NetworkBehaviour, IMovementBrain
 {
     [SerializeField] public CharacterController characterController;
@@ -12,32 +26,43 @@ public class NetworkCharacterBrain : NetworkBehaviour, IMovementBrain
     [SerializeField] float rotationSmoothTime = 0.1f;
 
     [SerializeField] public Transform cameraPivot;
+    [SerializeField] private GameObject tpsCamera;
     [SerializeField] public float sensitivity = 2.5f;
     [SerializeField] public float minPitch = -40f;
     [SerializeField] public float maxPitch = 80f;
     [SerializeField] public float smoothTime = 0.05f;
 
-    public MovementSO movementData
-    {
-        get => Data;
-        protected set => Data = value;
-    }
+    // ── IMovementBrain ───────────────────────────────────────────────────────
 
+    public MovementSO movementData => Data;
     public IMovementBrainStatePayload movementBrainStatePayload { get; set; }
-    public IInputProvider<IMovementInputPayload> movementInputProvider { get; protected set; }
 
-    public IAdvancedMotor movementMotor { get; protected set; }
-    public CharacterCamera characterCamera { get; protected set; }
-    public MovementStateMachine movementStateMachine { get; protected set; }
+    /// <summary>
+    /// Always points to remoteInput — the single simulation input source.
+    /// For owners, InjectInput() pushes captured local input here before each tick.
+    /// </summary>
+    public IInputProvider<IMovementInputPayload> movementInputProvider => remoteInput;
 
-    public MovementAnimationEventTrigger MovementAnimationEventTrigger { get => movementAnimationEventTrigger; }
-    public CharacterAnimatorController characterAnimatorController { get; protected set; }
-    public MovementClientPrediction movementClientPrediction { get; protected set; }
+    public IAdvancedMotor movementMotor { get; private set; }
+    public CharacterCamera characterCamera { get; private set; }
+    public MovementStateMachine movementStateMachine { get; private set; }
+    public MovementAnimationEventTrigger MovementAnimationEventTrigger => movementAnimationEventTrigger;
+    public CharacterAnimatorController characterAnimatorController { get; private set; }
 
-    public void Awake()
+    // ── Network-specific ─────────────────────────────────────────────────────
+
+    /// <summary>The single simulation input source — always used by the state machine.</summary>
+    internal RemotePlayerInputProvider remoteInput { get; private set; }
+
+    /// <summary>Owner-only: polled for local device input, then captured as a network payload.</summary>
+    private LocalPlayerInputProvider localInput;
+
+    private MovementClientPrediction prediction;
+
+    // ── Unity lifecycle ──────────────────────────────────────────────────────
+
+    private void Awake()
     {
-        characterAnimatorController = new CharacterAnimatorController(animator, this, rotationSmoothTime, meshTransform);
-
         movementBrainStatePayload = new NetworkMovementBrainStatePayload();
 
         movementMotor = new AdvancedCharacterControllerMotor(
@@ -48,57 +73,67 @@ public class NetworkCharacterBrain : NetworkBehaviour, IMovementBrain
             1,
             Data.AirborneData.Gravity.y);
 
-        // Input provider is set in OnNetworkSpawn once ownership is known.
-        movementInputProvider = new AIInputProvider();
-
-        movementClientPrediction = new MovementClientPrediction(this);
+        remoteInput = new RemotePlayerInputProvider();
 
         movementStateMachine = new NetworkMovementStateMachine(this);
 
         characterCamera = new CharacterCamera(this, cameraPivot, sensitivity, minPitch, maxPitch, smoothTime);
+        characterAnimatorController = new CharacterAnimatorController(animator, this, rotationSmoothTime, meshTransform);
     }
 
     public override void OnNetworkSpawn()
     {
         if (IsOwner)
-            movementInputProvider = new PlayerInputProvider(cameraPivot);
+            localInput = new LocalPlayerInputProvider(cameraPivot);
+        else
+            tpsCamera.SetActive(false);
+
+        prediction = new MovementClientPrediction(this);
     }
 
-    public void Update()
+    public override void OnNetworkDespawn()
     {
-        movementClientPrediction.Update();
+        prediction?.Dispose();
+        prediction = null;
     }
 
     private void LateUpdate()
     {
-        Debuger.Instance.Clear();
-        Debuger.Instance.Add($"State : {movementStateMachine.CurrentState}");
-        Debuger.Instance.Add($"Position : {movementMotor.Position}");
-        Debuger.Instance.Add($"Velocity : {movementMotor.Velocity}");
-        Debuger.Instance.Add($"IsGrounded : {movementMotor.IsGrounded}");
+        if (prediction == null) return;
+
+        // Animate all players (visible to everyone).
+        characterAnimatorController.Tick(Time.deltaTime);
+
+        // Camera only for the local owner.
+        if (IsOwner)
+            characterCamera.Tick(Time.deltaTime);
     }
 
-    public void Tick(float tickDelta)
-    {
-        characterAnimatorController.Tick(tickDelta);
-        characterCamera.Tick(tickDelta);
-        movementInputProvider.Tick(tickDelta);
+    // ── Called by MovementClientPrediction ───────────────────────────────────
 
-        movementStateMachine.Tick(tickDelta);
-        movementMotor.ApplyForce(tickDelta, movementBrainStatePayload.IsGrounded);
-    }
+    /// <summary>Polls the local input device. Only valid on the owner.</summary>
+    internal void PollLocalInput(float delta) => localInput.Tick(delta);
 
-    // ================= RPCs =================
+    /// <summary>Returns the last polled local input payload. Only valid on the owner.</summary>
+    internal IMovementInputPayload LocalInputPayload => localInput.InputPayload;
+
+    /// <summary>
+    /// Pushes <paramref name="input"/> into remoteInput so the state machine reads it
+    /// on the next simulation step.
+    /// </summary>
+    internal void InjectInput(NetworkMovementInputPayload input) => remoteInput.SetPayload(input);
+
+    // ── RPCs ──────────────────────────────────────────────────────────────────
 
     [ServerRpc]
-    public void SendMovementInputServerRpc(NetworkMovementInputPayload input)
-        => movementClientPrediction.OnReceiveInputFromClient(input);
+    public void SendInputServerRpc(NetworkMovementInputPayload input)
+        => prediction?.ReceiveInputOnServer(input);
 
     [ClientRpc]
-    public void BroadcastMovementStateClientRpc(NetworkMovementBrainStatePayload state)
-        => movementClientPrediction.OnReceiveStateFromServer(state);
+    public void BroadcastStateClientRpc(NetworkMovementBrainStatePayload state)
+        => prediction?.ReceiveStateOnClient(state);
 
     [ClientRpc]
-    public void ForwardMovementInputClientRpc(NetworkMovementInputPayload input)
-        => movementClientPrediction.OnReceiveForwardedInput(input);
+    public void ForwardInputClientRpc(NetworkMovementInputPayload input)
+        => prediction?.ReceiveForwardedInput(input);
 }

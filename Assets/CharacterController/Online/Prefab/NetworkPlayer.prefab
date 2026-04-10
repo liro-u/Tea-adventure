@@ -138,6 +138,7 @@ MonoBehaviour:
   meshTransform: {fileID: 8475448758780923012}
   rotationSmoothTime: 0.1
   cameraPivot: {fileID: 9028180395456621114}
+  tpsCamera: {fileID: 3944010498407514321}
   sensitivity: 2.5
   minPitch: -40
   maxPitch: 80

@@ -14264,7 +14264,7 @@ MonoBehaviour:
     normal: {x: 0.08527138, y: 0.9961032, z: 0.022517642}
     length: {x: 1, y: 1}
     color: {x: 1, y: 1, z: 1}
-  m_InstantiatedMaterial: {fileID: 1543883100}
+  m_InstantiatedMaterial: {fileID: 1657581767}
 --- !u!4 &1223583647
 Transform:
   m_ObjectHideFlags: 0
@@ -14557,7 +14557,7 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
---- !u!21 &1543883100
+--- !u!21 &1657581767
 Material:
   serializedVersion: 8
   m_ObjectHideFlags: 0
@@ -15150,6 +15150,50 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 7446590082972375451, guid: 6e11bebcedc72354fab82ed537f79da3, type: 3}
+--- !u!1 &1942053261
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1942053263}
+  - component: {fileID: 1942053262}
+  m_Layer: 0
+  m_Name: ReplayManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1942053262
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942053261}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2da8aa8d1418a2342af1012c7ac2322c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ReplayManager
+--- !u!4 &1942053263
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1942053261}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 369.07642, y: -22.29996, z: 1010.5509}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1994132328
 GameObject:
   m_ObjectHideFlags: 0
@@ -15663,3 +15707,4 @@ SceneRoots:
   - {fileID: 1661729807}
   - {fileID: 1223583647}
   - {fileID: 547709313}
+  - {fileID: 1942053263}
