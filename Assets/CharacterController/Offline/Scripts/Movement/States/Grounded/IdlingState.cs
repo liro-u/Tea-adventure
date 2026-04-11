@@ -1,4 +1,5 @@
 using UnityEngine;
+
 public class IdlingState : GroundedState
 {
     public IdlingState(MovementStateMachine stateMachine) : base(stateMachine)
@@ -8,8 +9,8 @@ public class IdlingState : GroundedState
     public override void Enter()
     {
         stateMachine.movementBrain.movementBrainStatePayload.MovementSpeedModifier = 0;
-
-        stateMachine.movementBrain.movementBrainStatePayload.CurrentJumpForce = stateMachine.movementBrain.movementData.AirborneData.JumpData.StationaryForce;
+        stateMachine.movementBrain.movementBrainStatePayload.CurrentJumpForce =
+            stateMachine.movementBrain.movementData.AirborneData.JumpData.StationaryForce;
 
         base.Enter();
 
@@ -25,15 +26,10 @@ public class IdlingState : GroundedState
     {
         base.Tick(tickDelta);
 
-        if (stateMachine.movementBrain.movementInputProvider.InputPayload.MoveInput != Vector2.zero)
-        {
+        if (stateMachine.CurrentInput.MoveInput != Vector2.zero)
             OnMove();
-        }
 
         if (stateMachine.movementBrain.movementMotor.IsMovingHorizontally())
-        {
             stateMachine.movementBrain.movementMotor.ResetVelocity();
-        }
-
     }
 }

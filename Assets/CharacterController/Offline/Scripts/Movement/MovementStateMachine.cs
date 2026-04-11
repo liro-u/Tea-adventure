@@ -1,9 +1,13 @@
-using UnityEngine;
 using System;
 
 public class MovementStateMachine : StateMachine
 {
     public IMovementBrain movementBrain;
+
+    // Injected at the start of every Tick call.
+    // States read input from here instead of from the brain's input provider,
+    // so the same state code runs unchanged during reconciliation replay.
+    public PlayerInputPayload CurrentInput { get; private set; }
 
     public IdlingState IdlingState;
 
@@ -44,5 +48,11 @@ public class MovementStateMachine : StateMachine
         FallingState = new FallingState(this);
 
         ChangeState(IdlingState);
+    }
+
+    public void Tick(float dt, PlayerInputPayload input)
+    {
+        CurrentInput = input;
+        Tick(dt);
     }
 }

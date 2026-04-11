@@ -27,7 +27,7 @@ public class CharacterControllerMotor : IMotor
         get => characterController.transform.position;
         set => SetPosition(value);
     }
-    public Vector3 Velocity { get; protected set; }
+    public Vector3 Velocity { get; set; }
 
     public Vector3 AccumulatedForce { get; protected set; }
     public Vector3 AccumulatedImpulse { get; protected set; }

@@ -15,4 +15,5 @@ public class MovementBrainStatePayload : IMovementBrainStatePayload
     public bool IsMoving { get; set; }
     public bool IsStopping { get; set; }
     public bool IsLanding { get; set; }
+    public float StateTimer { get; set; }
 }

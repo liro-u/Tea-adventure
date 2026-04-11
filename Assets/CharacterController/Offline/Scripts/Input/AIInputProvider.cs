@@ -1,6 +1,6 @@
-public class AIInputProvider : IInputProvider<IMovementInputPayload>
+public class AIInputProvider : IInputProvider<PlayerInputPayload>
 {
-    private MovementInputPayload inputPayload;
-    public IMovementInputPayload InputPayload => inputPayload;
+    public PlayerInputPayload InputPayload { get; private set; }
+
     public void Tick(float tickDelta) { }
 }

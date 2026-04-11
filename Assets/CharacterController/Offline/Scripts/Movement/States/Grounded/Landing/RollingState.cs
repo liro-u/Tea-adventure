@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class RollingState : LandingState
 {
@@ -9,7 +8,8 @@ public class RollingState : LandingState
 
     public override void Enter()
     {
-        stateMachine.movementBrain.movementBrainStatePayload.MovementSpeedModifier = stateMachine.movementBrain.movementData.GroundedData.RollData.SpeedModifier;
+        stateMachine.movementBrain.movementBrainStatePayload.MovementSpeedModifier =
+            stateMachine.movementBrain.movementData.GroundedData.RollData.SpeedModifier;
 
         base.Enter();
 
@@ -24,26 +24,18 @@ public class RollingState : LandingState
     public override void Tick(float tickDelta)
     {
         base.Tick(tickDelta);
-
-        if (stateMachine.movementBrain.movementInputProvider.InputPayload.MoveInput != Vector2.zero)
-        {
-            return;
-        }
     }
 
     public override void OnAnimationTransitionEvent()
     {
-        if (stateMachine.movementBrain.movementInputProvider.InputPayload.MoveInput == Vector2.zero)
+        if (stateMachine.CurrentInput.MoveInput == Vector2.zero)
         {
             stateMachine.ChangeState(stateMachine.MediumStoppingState);
-
             return;
         }
 
         OnMove();
     }
 
-    protected override void OnJumpStarted()
-    {
-    }
+    protected override void OnJumpStarted() { }
 }

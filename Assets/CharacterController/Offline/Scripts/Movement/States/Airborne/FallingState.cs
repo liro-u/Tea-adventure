@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class FallingState : AirborneState
@@ -14,9 +13,7 @@ public class FallingState : AirborneState
         base.Enter();
 
         stateMachine.movementBrain.movementBrainStatePayload.MovementSpeedModifier = 0;
-
         positionOnEnter = stateMachine.movementBrain.movementMotor.Position;
-
 
         stateMachine.movementBrain.movementMotor.ResetVerticalVelocity();
     }
@@ -28,20 +25,6 @@ public class FallingState : AirborneState
         LimitVerticalVelocity();
     }
 
-    private void LimitVerticalVelocity()
-    {
-        Vector3 playerVerticalVelocity = stateMachine.movementBrain.movementMotor.GetVerticalVelocity();
-
-        if (playerVerticalVelocity.y >= -stateMachine.movementBrain.movementData.AirborneData.FallData.FallSpeedLimit)
-        {
-            return;
-        }
-
-        Vector3 limitedVelocityForce = new Vector3(0f, -stateMachine.movementBrain.movementData.AirborneData.FallData.FallSpeedLimit - playerVerticalVelocity.y, 0f);
-
-        stateMachine.movementBrain.movementMotor.AddForce(limitedVelocityForce, ForceMode.VelocityChange);
-    }
-
     protected override void OnContactWithGround()
     {
         float fallDistance = positionOnEnter.y - stateMachine.movementBrain.movementMotor.Position.y;
@@ -49,22 +32,33 @@ public class FallingState : AirborneState
         if (fallDistance < stateMachine.movementBrain.movementData.AirborneData.FallData.MinimumDistanceToBeConsideredHardFall)
         {
             stateMachine.ChangeState(stateMachine.LightLandingState);
-
             return;
         }
 
-        if ((stateMachine.movementBrain.movementBrainStatePayload.ShouldWalk && !stateMachine.movementBrain.movementBrainStatePayload.ShouldSprint) || stateMachine.movementBrain.movementInputProvider.InputPayload.MoveInput == Vector2.zero)
+        bool isMoving = stateMachine.CurrentInput.MoveInput != Vector2.zero;
+        bool isSprinting = stateMachine.movementBrain.movementBrainStatePayload.ShouldSprint;
+        bool shouldWalk = stateMachine.movementBrain.movementBrainStatePayload.ShouldWalk;
+
+        if (!isMoving || (shouldWalk && !isSprinting))
         {
             stateMachine.ChangeState(stateMachine.HardLandingState);
-
             return;
         }
 
         stateMachine.ChangeState(stateMachine.RollingState);
-
     }
 
-    protected override void ResetSprintState()
+    protected override void ResetSprintState() { }
+
+    private void LimitVerticalVelocity()
     {
+        Vector3 verticalVelocity = stateMachine.movementBrain.movementMotor.GetVerticalVelocity();
+        float limit = stateMachine.movementBrain.movementData.AirborneData.FallData.FallSpeedLimit;
+
+        if (verticalVelocity.y >= -limit) return;
+
+        stateMachine.movementBrain.movementMotor.AddForce(
+            new Vector3(0f, -limit - verticalVelocity.y, 0f),
+            UnityEngine.ForceMode.VelocityChange);
     }
 }

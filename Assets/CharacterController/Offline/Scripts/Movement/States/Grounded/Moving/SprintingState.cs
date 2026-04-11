@@ -1,29 +1,26 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class SprintingState : MovingState
 {
-    private float startTime;
-
     private bool keepSprinting;
     private bool shouldResetSprintState;
 
-    public SprintingState(MovementStateMachine movementStateMachine) : base(movementStateMachine)
+    public SprintingState(MovementStateMachine stateMachine) : base(stateMachine)
     {
     }
 
     public override void Enter()
     {
         stateMachine.movementBrain.movementBrainStatePayload.ShouldSprint = true;
-
-        stateMachine.movementBrain.movementBrainStatePayload.MovementSpeedModifier = stateMachine.movementBrain.movementData.GroundedData.SprintData.SpeedModifier;
-
-        stateMachine.movementBrain.movementBrainStatePayload.CurrentJumpForce = stateMachine.movementBrain.movementData.AirborneData.JumpData.StrongForce;
+        stateMachine.movementBrain.movementBrainStatePayload.MovementSpeedModifier =
+            stateMachine.movementBrain.movementData.GroundedData.SprintData.SpeedModifier;
+        stateMachine.movementBrain.movementBrainStatePayload.CurrentJumpForce =
+            stateMachine.movementBrain.movementData.AirborneData.JumpData.StrongForce;
+        stateMachine.movementBrain.movementBrainStatePayload.StateTimer = 0f;
 
         base.Enter();
 
-        startTime = Time.time;
-
+        keepSprinting = false;
         shouldResetSprintState = true;
     }
 
@@ -34,7 +31,6 @@ public class SprintingState : MovingState
         if (shouldResetSprintState)
         {
             keepSprinting = false;
-
             stateMachine.movementBrain.movementBrainStatePayload.ShouldSprint = false;
         }
     }
@@ -43,20 +39,17 @@ public class SprintingState : MovingState
     {
         base.Tick(tickDelta);
 
-        if (stateMachine.movementBrain.movementInputProvider.InputPayload.IsSprinting)
-        {
+        if (stateMachine.CurrentInput.IsSprinting)
             OnSprintPerformed();
-        }
 
         if (keepSprinting)
-        {
             return;
-        }
 
-        if (Time.time < startTime + stateMachine.movementBrain.movementData.GroundedData.SprintData.SprintToRunTime)
-        {
+        stateMachine.movementBrain.movementBrainStatePayload.StateTimer += tickDelta;
+
+        if (stateMachine.movementBrain.movementBrainStatePayload.StateTimer <
+            stateMachine.movementBrain.movementData.GroundedData.SprintData.SprintToRunTime)
             return;
-        }
 
         StopSprinting();
     }
@@ -64,16 +57,14 @@ public class SprintingState : MovingState
     private void OnSprintPerformed()
     {
         keepSprinting = true;
-
         stateMachine.movementBrain.movementBrainStatePayload.ShouldSprint = true;
     }
 
     private void StopSprinting()
     {
-        if (stateMachine.movementBrain.movementInputProvider.InputPayload.MoveInput == Vector2.zero)
+        if (stateMachine.CurrentInput.MoveInput == Vector2.zero)
         {
             stateMachine.ChangeState(stateMachine.IdlingState);
-
             return;
         }
 
@@ -83,21 +74,18 @@ public class SprintingState : MovingState
     protected override void OnMoveCanceled()
     {
         stateMachine.ChangeState(stateMachine.HardStoppingState);
-
         base.OnMoveCanceled();
     }
 
     protected override void OnJumpStarted()
     {
         shouldResetSprintState = false;
-
         base.OnJumpStarted();
     }
 
     protected override void OnFall()
     {
         shouldResetSprintState = false;
-
         base.OnFall();
     }
 }

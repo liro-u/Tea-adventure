@@ -1,17 +1,19 @@
-﻿using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem;
-using UnityEngine.Windows;
+
+/// <summary>
+/// Drives the camera pivot from look input.
+/// Reads directly from the input provider — this is a visual/Update-rate concern,
+/// not part of the fixed-tick simulation, so it bypasses SimulateTick entirely.
+/// </summary>
 public class CharacterCamera
 {
-    protected Transform cameraPivot;
-    protected IMovementBrain movementBrain;
+    private readonly Transform cameraPivot;
+    private readonly IInputProvider<PlayerInputPayload> inputProvider;
 
-    protected float sensitivity;
-    protected float minPitch;
-    protected float maxPitch;
-
-    protected float smoothTime; // lower = snappier
+    private readonly float sensitivity;
+    private readonly float minPitch;
+    private readonly float maxPitch;
+    private readonly float smoothTime;
 
     private float targetYaw;
     private float targetPitch;
@@ -22,8 +24,15 @@ public class CharacterCamera
     private float yawVelocity;
     private float pitchVelocity;
 
-    public CharacterCamera(IMovementBrain movementBrain, Transform cameraPivot, float sensitivity, float minPitch, float maxPitch, float smoothTime) {
-        this.movementBrain = movementBrain;
+    public CharacterCamera(
+        IInputProvider<PlayerInputPayload> inputProvider,
+        Transform cameraPivot,
+        float sensitivity,
+        float minPitch,
+        float maxPitch,
+        float smoothTime)
+    {
+        this.inputProvider = inputProvider;
         this.cameraPivot = cameraPivot;
         this.sensitivity = sensitivity;
         this.minPitch = minPitch;
@@ -31,21 +40,19 @@ public class CharacterCamera
         this.smoothTime = smoothTime;
     }
 
-    public void Tick(float tickDelta)
+    public void Tick(float deltaTime)
     {
         ApplyLook();
     }
 
     private void ApplyLook()
     {
-        // Mouse delta should NOT be multiplied by deltaTime
-        targetYaw += movementBrain.movementInputProvider.InputPayload.LookInput.x * sensitivity;
-        targetPitch -= movementBrain.movementInputProvider.InputPayload.LookInput.y * sensitivity;
+        // Mouse delta must NOT be multiplied by deltaTime — it is already a frame delta
+        targetYaw   += inputProvider.InputPayload.LookInput.x * sensitivity;
+        targetPitch -= inputProvider.InputPayload.LookInput.y * sensitivity;
+        targetPitch  = Mathf.Clamp(targetPitch, minPitch, maxPitch);
 
-        targetPitch = Mathf.Clamp(targetPitch, minPitch, maxPitch);
-
-        // SmoothDamp = physically plausible smoothing
-        yaw = Mathf.SmoothDampAngle(yaw, targetYaw, ref yawVelocity, smoothTime);
+        yaw   = Mathf.SmoothDampAngle(yaw,   targetYaw,   ref yawVelocity,   smoothTime);
         pitch = Mathf.SmoothDampAngle(pitch, targetPitch, ref pitchVelocity, smoothTime);
 
         cameraPivot.localRotation = Quaternion.Euler(pitch, yaw, 0f);

@@ -3,7 +3,9 @@ using UnityEngine;
 public interface IMotor
 {
     public Vector3 Position { get; set; }
-    public Vector3 Velocity { get; }
+
+    // Settable so ApplyState can restore velocity during reconciliation.
+    public Vector3 Velocity { get; set; }
 
     public Vector3 AccumulatedForce { get; }
     public Vector3 AccumulatedImpulse { get; }

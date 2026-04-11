@@ -14,4 +14,8 @@ public interface IMovementBrainStatePayload
     public bool IsMoving { get; set; }
     public bool IsStopping { get; set; }
     public bool IsLanding { get; set; }
+
+    // Replay-safe timer: reset to 0 on state Enter, accumulated via tickDelta.
+    // Replaces any Time.time usage so reconciliation replays produce identical results.
+    public float StateTimer { get; set; }
 }

@@ -12,7 +12,8 @@ public class LightLandingState : LandingState
 
         base.Enter();
 
-        stateMachine.movementBrain.movementBrainStatePayload.CurrentJumpForce = stateMachine.movementBrain.movementData.AirborneData.JumpData.StationaryForce;
+        stateMachine.movementBrain.movementBrainStatePayload.CurrentJumpForce =
+            stateMachine.movementBrain.movementData.AirborneData.JumpData.StationaryForce;
 
         stateMachine.movementBrain.movementMotor.ResetVelocity();
     }
@@ -21,15 +22,11 @@ public class LightLandingState : LandingState
     {
         base.Tick(tickDelta);
 
-        if (stateMachine.movementBrain.movementInputProvider.InputPayload.MoveInput != Vector2.zero)
-        {
+        if (stateMachine.CurrentInput.MoveInput != Vector2.zero)
             OnMove();
-        }
 
         if (stateMachine.movementBrain.movementMotor.IsMovingHorizontally())
-        {
             stateMachine.movementBrain.movementMotor.ResetVelocity();
-        }
     }
 
     public override void OnAnimationTransitionEvent()
