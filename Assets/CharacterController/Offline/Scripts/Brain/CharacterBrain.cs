@@ -58,7 +58,7 @@ public class CharacterBrain : MonoBehaviour, IMovementBrain,
 
     // ── Unity lifecycle ───────────────────────────────────────────────────────
 
-    public void Awake()
+    protected virtual void Awake()
     {
         WorldSimulation.Instance.Register(this);
         movementBrainStatePayload = new MovementBrainStatePayload();

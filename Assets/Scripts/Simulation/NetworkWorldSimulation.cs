@@ -33,14 +33,12 @@ public class NetworkWorldSimulation : WorldSimulation
 
     public void RegisterReconcilable(IReconcilableEntity entity)
     {
-        Register(entity);
         if (!reconcilables.Contains(entity))
             reconcilables.Add(entity);
     }
 
     public void UnregisterReconcilable(IReconcilableEntity entity)
     {
-        Unregister(entity);
         reconcilables.Remove(entity);
     }
 
