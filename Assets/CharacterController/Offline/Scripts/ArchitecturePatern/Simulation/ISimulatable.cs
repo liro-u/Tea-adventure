@@ -11,7 +11,7 @@
 ///           buffers inputs, buffers states, detects divergence, and calls SimulateTick
 ///           again during reconciliation replay — all without touching the brain internals.
 /// </summary>
-public interface ISimulatable<TInput, TState>
+public interface ISimulatable<TInput, TState> : ISimulatableEntity
     where TInput : struct
     where TState : struct
 {

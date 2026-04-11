@@ -2,17 +2,18 @@ using UnityEngine;
 
 /// <summary>
 /// The player character's root MonoBehaviour.
-/// Owns every sub-system, wires them together, and drives the tick loops.
+/// Owns every sub-system, wires them together, and registers with WorldSimulation.
 ///
 /// Implements ISimulatable&lt;PlayerInputPayload, PlayerStateSnapshot&gt; so the
 /// future NetworkCharacterBrain can wrap it inside ClientPrediction with zero
 /// changes to this class: it only needs to call SimulateTick / ApplyState.
 ///
-/// Offline tick flow (FixedUpdate):
-///   inputProvider.Tick() → SimulateTick(dt, liveInput)
-///     → movementStateMachine.Tick(dt, input)
-///     → movementMotor.ApplyForce(dt)
-///     → returns snapshot (discarded offline, used by ClientPrediction online)
+/// Fixed tick flow (driven by WorldSimulation):
+///   SimulateTick(dt)           ← ISimulatableEntity, called by WorldSimulation
+///     → SimulateTick(dt, liveInput)
+///       → movementStateMachine.Tick(dt, input)
+///       → movementMotor.ApplyForce(dt)
+///       → returns snapshot (discarded offline, used by ClientPrediction online)
 ///
 /// Visual / Update-rate tick (Update):
 ///   characterAnimatorController.Tick()
@@ -59,6 +60,7 @@ public class CharacterBrain : MonoBehaviour, IMovementBrain,
 
     public void Awake()
     {
+        WorldSimulation.Instance.Register(this);
         movementBrainStatePayload = new MovementBrainStatePayload();
 
         movementMotor = new AdvancedCharacterControllerMotor(
@@ -78,6 +80,8 @@ public class CharacterBrain : MonoBehaviour, IMovementBrain,
         characterCamera = new CharacterCamera(inputProvider, cameraPivot, sensitivity, minPitch, maxPitch, smoothTime);
     }
 
+    private void OnDestroy() => WorldSimulation.Instance?.Unregister(this);
+
     public void Update()
     {
         inputProvider.Tick(Time.deltaTime);
@@ -85,10 +89,11 @@ public class CharacterBrain : MonoBehaviour, IMovementBrain,
         characterCamera.Tick(Time.deltaTime);
     }
 
-    public void FixedUpdate()
-    {
-        SimulateTick(Time.fixedDeltaTime, inputProvider.InputPayload);
-    }
+    // ── ISimulatableEntity ────────────────────────────────────────────────────
+
+    void ISimulatableEntity.SimulateTick(float dt) => OnSimulateTick(dt);
+
+    protected virtual void OnSimulateTick(float dt) => SimulateTick(dt, inputProvider.InputPayload);
 
     private void LateUpdate()
     {
