@@ -1,19 +1,17 @@
+using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// A full, value-type snapshot of the player simulation at one tick.
-/// Used as TState in ISimulatable&lt;PlayerInputPayload, PlayerStateSnapshot&gt;.
+/// Full value-type snapshot of the player simulation at one tick.
 ///
-/// Offline:  returned by SimulateTick but otherwise discarded.
-/// Online:   the NetworkCharacterBrain passes this to ClientPrediction as TState.
-///           It must eventually implement INetworkSerializable — every field here
-///           is a blittable value type so that conversion requires no structural change,
-///           only adding the serialization methods.
+/// Offline:  returned by CharacterBrainCore.SimulateTick but discarded.
+/// Online:   buffered by ClientPrediction&lt;PlayerInputPayload, PlayerStateSnapshot&gt;
+///           and sent as a ClientRpc parameter for server corrections.
 ///
-/// When adding a new system (combat, vehicles, interaction), extend this struct
-/// and add the corresponding RestoreXxx / SnapshotXxx helpers in CharacterBrain.
+/// Tick is managed externally by ClientPrediction and passed as a dedicated
+/// RPC parameter — it does not need to be embedded in the snapshot.
 /// </summary>
-public struct PlayerStateSnapshot
+public struct PlayerStateSnapshot : INetworkSerializable
 {
     // ── Motor ─────────────────────────────────────────────────────────────────
     public Vector3 Position;
@@ -23,19 +21,39 @@ public struct PlayerStateSnapshot
     public MovementStateId MovementStateId;
 
     // ── Movement payload ──────────────────────────────────────────────────────
-    public bool   ShouldWalk;
-    public bool   ShouldSprint;
-    public float  MovementSpeedModifier;
-    public float  MovementDecelerationForce;
-    public int    RemainingJump;
+    public bool    ShouldWalk;
+    public bool    ShouldSprint;
+    public float   MovementSpeedModifier;
+    public float   MovementDecelerationForce;
+    public int     RemainingJump;
     public Vector3 CurrentJumpForce;
-    public bool   IsGrounded;
-    public bool   IsMoving;
-    public bool   IsStopping;
-    public bool   IsLanding;
+    public bool    IsGrounded;
+    public bool    IsMoving;
+    public bool    IsStopping;
+    public bool    IsLanding;
+    public float   StateTimer;
 
-    // Replay-safe timer — replaces any Time.time usage inside states.
-    // States accumulate this via tickDelta; snapshot/restore keeps it correct
-    // across reconciliation replays.
-    public float  StateTimer;
+    // ── INetworkSerializable ──────────────────────────────────────────────────
+
+    public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+    {
+        serializer.SerializeValue(ref Position);
+        serializer.SerializeValue(ref Velocity);
+
+        var stateId = (byte)MovementStateId;
+        serializer.SerializeValue(ref stateId);
+        if (serializer.IsReader) MovementStateId = (MovementStateId)stateId;
+
+        serializer.SerializeValue(ref ShouldWalk);
+        serializer.SerializeValue(ref ShouldSprint);
+        serializer.SerializeValue(ref MovementSpeedModifier);
+        serializer.SerializeValue(ref MovementDecelerationForce);
+        serializer.SerializeValue(ref RemainingJump);
+        serializer.SerializeValue(ref CurrentJumpForce);
+        serializer.SerializeValue(ref IsGrounded);
+        serializer.SerializeValue(ref IsMoving);
+        serializer.SerializeValue(ref IsStopping);
+        serializer.SerializeValue(ref IsLanding);
+        serializer.SerializeValue(ref StateTimer);
+    }
 }

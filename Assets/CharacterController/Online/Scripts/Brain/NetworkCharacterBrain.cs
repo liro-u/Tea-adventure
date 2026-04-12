@@ -1,89 +1,112 @@
+using Unity.Netcode;
 using UnityEngine;
 
 /// <summary>
-/// Online wrapper around CharacterBrain.
-/// Inherits the full offline simulation unchanged and adds:
-///   - Input buffering  (one entry per tick, used during reconciliation replay)
-///   - State buffering  (one snapshot per tick, compared against server corrections)
-///   - IReconcilableEntity so NetworkWorldSimulation can rewind + replay this entity
+/// NetworkBehaviour wrapper for online play.
+/// Creates a NetworkCharacterBrainCore, wires its Prediction callbacks to RPCs,
+/// and registers Prediction (not the core) with WorldSimulation / NetworkWorldSimulation.
 ///
-/// Offline tick flow is untouched — OnSimulateTick is overridden to buffer before
-/// and after the base simulation call, nothing else changes.
-///
-/// TODO (when NGO transport is wired up):
-///   - Swap inputProvider for a NetworkInputProvider that receives server-relayed inputs
-///   - Implement NeedsReconciliation to compare stateBuffer against received server snapshots
-///   - Add INetworkSerializable to PlayerStateSnapshot and PlayerInputPayload
+/// All simulation and prediction logic is in CharacterBrainCore / ClientPrediction.
+/// This class is responsible only for NGO concerns: spawn events, RPCs, and Update gating.
 /// </summary>
-public class NetworkCharacterBrain : CharacterBrain, IReconcilableEntity
+public class NetworkCharacterBrain : NetworkBehaviour
 {
-    private const int BufferSize = 128;
+    [SerializeField] private CharacterController           characterController;
+    [SerializeField] private MovementSO                    movementSO;
+    [SerializeField] private MovementAnimationEventTrigger movementAnimationEventTrigger;
+    [SerializeField] private Animator                      animator;
+    [SerializeField] private Transform                     meshTransform;
+    [SerializeField] private float                         rotationSmoothTime = 0.1f;
+    [SerializeField] private Transform                     cameraPivot;
+    [SerializeField] private float                         sensitivity        = 2.5f;
+    [SerializeField] private float                         minPitch           = -40f;
+    [SerializeField] private float                         maxPitch           =  80f;
+    [SerializeField] private float                         smoothTime         = 0.05f;
 
-    private readonly PlayerInputPayload[]    inputBuffer = new PlayerInputPayload[BufferSize];
-    private readonly PlayerStateSnapshot[]   stateBuffer = new PlayerStateSnapshot[BufferSize];
+    private NetworkCharacterBrainCore brain;
 
-    // Tick index at which SaveState was last called — used to index the buffers in OnSimulateTick.
-    private int pendingTick;
+    // ── Unity / NGO lifecycle ─────────────────────────────────────────────────
 
-    // During reconciliation replay the entity must serve buffered inputs instead of live input.
-    // replayFromTick is set by RestoreState; OnSimulateTick increments it each replay call.
-    private bool  isReplaying;
-    private int   replayTick;
-
-    protected override void Awake()
+    private void Awake()
     {
-        base.Awake();
-        NetworkWorldSimulation.Instance.RegisterReconcilable(this);
+        if (characterController == null) { Debug.LogError("CharacterController not assigned.", this); return; }
+        if (movementSO          == null) { Debug.LogError("MovementSO not assigned.",          this); return; }
+        if (animator            == null) { Debug.LogError("Animator not assigned.",            this); return; }
+        if (cameraPivot         == null) { Debug.LogError("CameraPivot not assigned.",         this); return; }
+        if (meshTransform       == null) { Debug.LogError("MeshTransform not assigned.",       this); return; }
+
+        brain = new NetworkCharacterBrainCore(
+            this,
+            characterController, movementSO, animator, meshTransform,
+            movementAnimationEventTrigger, cameraPivot,
+            sensitivity, minPitch, maxPitch, smoothTime, rotationSmoothTime);
+
+        brain.Prediction.OnSendInput = (input, tick, prevInput, prevTick) =>
+            SubmitInputServerRpc(input, tick, prevInput, prevTick);
+
+        brain.Prediction.OnSendStateCorrection = (state, tick) =>
+            ReceiveStateCorrectionClientRpc(state, tick, new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
+            });
     }
 
-    private new void OnDestroy()
+    public override void OnNetworkSpawn()
     {
-        NetworkWorldSimulation.Instance?.UnregisterReconcilable(this);
+        if (brain == null) return;
+        if (IsOwner && !IsServer)
+            brain.Prediction.RegisterWithReconciliation(NetworkWorldSimulation.Instance);
+        else if (IsServer)
+            brain.Prediction.Register(WorldSimulation.Instance);
     }
 
-    // ── IReconcilableEntity ───────────────────────────────────────────────────
-
-    public void SaveState(int tick)
+    public override void OnNetworkDespawn()
     {
-        pendingTick = tick;
-        isReplaying = false;
+        if (brain == null) return;
+        if (IsOwner && !IsServer)
+            brain.Prediction.UnregisterWithReconciliation(NetworkWorldSimulation.Instance);
+        else if (IsServer)
+            brain.Prediction.Unregister(WorldSimulation.Instance);
     }
 
-    public void RestoreState(int tick)
+    private void Update()
     {
-        ApplyState(stateBuffer[tick % BufferSize]);
-        isReplaying  = true;
-        replayTick   = tick;
-    }
-
-    public bool NeedsReconciliation(out int fromTick)
-    {
-        // TODO: compare stateBuffer entries against server-authoritative snapshots received via NGO.
-        // Return true and set fromTick to the earliest diverging tick.
-        fromTick = 0;
-        return false;
-    }
-
-    // ── Simulation hook ───────────────────────────────────────────────────────
-
-    protected override void OnSimulateTick(float dt)
-    {
-        PlayerInputPayload input;
-
-        if (isReplaying)
-        {
-            input = inputBuffer[replayTick % BufferSize];
-            replayTick++;
-        }
+        if (brain == null) return;
+        if (IsOwner)
+            brain.OnUpdate(Time.deltaTime);
         else
-        {
-            input = inputProvider.InputPayload;
-            inputBuffer[pendingTick % BufferSize] = input;
-        }
+            brain.characterAnimatorController.Tick(Time.deltaTime);
+    }
 
-        stateBuffer[pendingTick % BufferSize] = SimulateTick(dt, input);
+    private void LateUpdate()
+    {
+        if (!IsOwner || brain == null) return;
+        Debuger.Instance.Clear();
+        Debuger.Instance.Add($"State    : {brain.movementStateMachine.CurrentState}");
+        Debuger.Instance.Add($"Position : {brain.movementMotor.Position}");
+        Debuger.Instance.Add($"Velocity : {brain.movementMotor.Velocity}");
+        Debuger.Instance.Add($"Grounded : {brain.movementMotor.IsGrounded}");
+    }
 
-        if (!isReplaying)
-            pendingTick++;
+    // ── RPCs ──────────────────────────────────────────────────────────────────
+
+    [ServerRpc]
+    private void SubmitInputServerRpc(PlayerInputPayload input, int tick,
+        PlayerInputPayload prevInput, int prevTick,
+        ServerRpcParams rpcParams = default)
+    {
+        if (rpcParams.Receive.SenderClientId != OwnerClientId) return;
+        brain.Prediction.EnqueueServerInput(input, tick);
+        brain.Prediction.EnqueueServerInput(prevInput, prevTick);
+    }
+
+    [ClientRpc]
+    private void ReceiveStateCorrectionClientRpc(PlayerStateSnapshot state, int tick,
+        ClientRpcParams rpcParams = default)
+    {
+        if (IsOwner)
+            brain.Prediction.ReceiveCorrection(state, tick);
+        else
+            brain.ApplyState(state);
     }
 }

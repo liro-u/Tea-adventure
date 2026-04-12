@@ -42,6 +42,12 @@ public class NetworkWorldSimulation : WorldSimulation
         reconcilables.Remove(entity);
     }
 
+    private void ReplayTick(float dt)
+    {
+        foreach (var e in reconcilables)
+            e.SimulateTick(dt);
+    }
+
     protected override void FixedUpdate()
     {
         foreach (var e in reconcilables)
@@ -67,7 +73,7 @@ public class NetworkWorldSimulation : WorldSimulation
                 e.RestoreState(rewindTick);
 
             for (int t = rewindTick; t < currentTick; t++)
-                Tick(Time.fixedDeltaTime);
+                ReplayTick(Time.fixedDeltaTime);
         }
 
         currentTick++;
