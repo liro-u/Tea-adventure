@@ -29,12 +29,18 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 {
     private const int BufferSize = 128;
 
+    private struct StateSnapshot
+    {
+        public TState State;
+        public int Tick;
+    }
+
     private readonly ISimulatable<TInput, TState> simulatable;
     private readonly Func<TInput>                 getLiveInput;
     private readonly NetworkBehaviour             owner;
 
     private readonly TInput[] inputBuffer = new TInput[BufferSize];
-    private readonly TState[] stateBuffer = new TState[BufferSize];
+    private readonly StateSnapshot[] stateBuffer = new StateSnapshot[BufferSize];
 
     // Ring buffer for server-side inputs indexed by tick.
     // EnqueueServerInput writes to buffer[tick % size]; SimulateTick reads at pendingTick.
@@ -170,9 +176,9 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 
         if (!isReplaying)
         {
-            stateBuffer[pendingTick % BufferSize] = snapshot;
+            stateBuffer[pendingTick % BufferSize] = new StateSnapshot { State = snapshot, Tick = pendingTick };
 
-            if (owner.IsServer /* && !owner.IsOwner*/)
+            if (owner.IsServer)
                 OnSendStateCorrection?.Invoke(snapshot, pendingTick);
 
             pendingTick++;
@@ -189,7 +195,7 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 
     public void RestoreState(int tick)
     {
-        simulatable.ApplyState(stateBuffer[tick % BufferSize]);
+        simulatable.ApplyState(stateBuffer[tick % BufferSize].State);
         isReplaying = true;
         replayTick  = tick;
     }
@@ -203,14 +209,23 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 
         hasPendingCorrection = false;
 
-        if (!CheckDivergence(pendingCorrection, stateBuffer[pendingCorrectionTick % BufferSize]))
+        int bufferSlot = pendingCorrectionTick % BufferSize;
+        // Check if the buffer slot still contains the state from the correction's tick
+        if (stateBuffer[bufferSlot].Tick != pendingCorrectionTick)
+        {
+            // Slot has been overwritten with new data, discard this stale correction
+            fromTick = 0;
+            return false;
+        }
+
+        if (!CheckDivergence(pendingCorrection, stateBuffer[bufferSlot].State))
         {
             fromTick = 0;
             return false;
         }
 
         // Overwrite with the authoritative state so RestoreState has the correct base.
-        stateBuffer[pendingCorrectionTick % BufferSize] = pendingCorrection;
+        stateBuffer[bufferSlot] = new StateSnapshot { State = pendingCorrection, Tick = pendingCorrectionTick };
         fromTick = pendingCorrectionTick;
         return true;
     }

@@ -38,8 +38,7 @@ public class NetworkCharacterBrainCore : CharacterBrainCore
             networkBehaviour)
         {
             CheckDivergence = (server, local) =>
-                Vector3.Distance(server.Position, local.Position) > 0.001f ||
-                Vector3.Distance(server.Velocity, local.Velocity) > 0.001f
+                Vector3.Distance(server.Position, local.Position) > 0.01f
         };
     }
 }
