@@ -1,5 +1,6 @@
 using System;
 using Unity.Netcode;
+using UnityEngine;
 
 /// <summary>
 /// Generic client-side prediction layer for any simulatable entity.
@@ -111,6 +112,13 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 
     // ── Called by the NetworkBehaviour RPC layer ──────────────────────────────
 
+    /// <summary>
+    /// Called on the server in OnNetworkSpawn to align pendingTick with the global simulation tick.
+    /// Without this, the server's per-character pendingTick starts at 0 while the client's
+    /// currentTick is synced to the server's elapsed time — causing every correction to be discarded.
+    /// </summary>
+    public void InitializeTick(int tick) => pendingTick = tick;
+
     /// <summary>Server side: store an input received from the owning client, indexed by its tick.
     /// Safe to call multiple times for the same tick (redundant sends are idempotent).</summary>
     public void EnqueueServerInput(TInput input, int tick)
@@ -139,7 +147,6 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
         if (isReplaying)
         {
             input = inputBuffer[replayTick % BufferSize];
-            replayTick++;
         }
         else if (owner.IsOwner)
         {
@@ -174,7 +181,14 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 
         var snapshot = simulatable.SimulateTick(dt, input);
 
-        if (!isReplaying)
+        if (isReplaying)
+        {
+            // Write corrected state back so future corrections compare against the replayed history,
+            // not the stale pre-reconciliation states that were in the buffer before.
+            stateBuffer[replayTick % BufferSize] = new StateSnapshot { State = snapshot, Tick = replayTick };
+            replayTick++;
+        }
+        else
         {
             stateBuffer[pendingTick % BufferSize] = new StateSnapshot { State = snapshot, Tick = pendingTick };
 

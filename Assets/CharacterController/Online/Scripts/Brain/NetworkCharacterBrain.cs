@@ -56,7 +56,10 @@ public class NetworkCharacterBrain : NetworkBehaviour
         if (IsOwner && !IsServer)
             brain.Prediction.RegisterWithReconciliation(NetworkWorldSimulation.Instance);
         else if (IsServer)
+        {
+            brain.Prediction.InitializeTick(NetworkWorldSimulation.Instance.CurrentTick);
             brain.Prediction.Register(WorldSimulation.Instance);
+        }
     }
 
     public override void OnNetworkDespawn()
@@ -103,9 +106,10 @@ public class NetworkCharacterBrain : NetworkBehaviour
     private void ReceiveStateCorrectionClientRpc(PlayerStateSnapshot state, int tick,
         ClientRpcParams rpcParams = default)
     {
-        if (IsOwner)
+        if (IsOwner && !IsServer)
             brain.Prediction.ReceiveCorrection(state, tick);
-        else
+        else if (!IsOwner)
             brain.ApplyState(state);
+        // host (IsOwner && IsServer): already authoritative, nothing to do
     }
 }
