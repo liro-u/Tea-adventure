@@ -45,10 +45,7 @@ public class NetworkCharacterBrain : NetworkBehaviour
             SubmitInputServerRpc(input, tick, prevInput, prevTick);
 
         brain.Prediction.OnSendStateCorrection = (state, tick) =>
-            ReceiveStateCorrectionClientRpc(state, tick, new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams { TargetClientIds = new[] { OwnerClientId } }
-            });
+            ReceiveStateCorrectionClientRpc(state, tick);
     }
 
     public override void OnNetworkSpawn()
