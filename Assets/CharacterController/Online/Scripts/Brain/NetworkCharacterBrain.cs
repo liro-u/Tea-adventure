@@ -22,6 +22,7 @@ public class NetworkCharacterBrain : NetworkBehaviour
     [SerializeField] private float                         minPitch           = -40f;
     [SerializeField] private float                         maxPitch           =  80f;
     [SerializeField] private float                         smoothTime         = 0.05f;
+    [SerializeField] private GameObject                    tpsCamera;
 
     private NetworkCharacterBrainCore brain;
 
@@ -51,6 +52,7 @@ public class NetworkCharacterBrain : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         if (brain == null) return;
+        if (tpsCamera != null) tpsCamera.SetActive(IsOwner);
         if (IsOwner && !IsServer)
             brain.Prediction.RegisterWithReconciliation(NetworkWorldSimulation.Instance);
         else if (IsServer)
