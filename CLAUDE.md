@@ -24,8 +24,10 @@ Assets/
     Online/                  # Network wrapper around the offline controller
   Scripts/                   # Game-specific code
     Network/                 # Relay, session management
+    Simulation/              # WorldSimulation, NetworkWorldSimulation
     UI/                      # UI logic
     Debug/                   # Debug utilities
+TODO/                        # Known missing features, one file per system
 ```
 
 Code that could be reused in another project lives in its own **package folder** (e.g. `CharacterController/`, future `VehicleController/`).  
@@ -83,7 +85,7 @@ public override void Enter() => GetComponent<CharacterController>().Move(...);
 
 ### 3. Networking wraps, does not own logic
 
-The Online layer (`NetworkCharacterBrain`, `MovementClientPrediction`) wraps the offline brain. All movement/combat/vehicle simulation logic lives in the offline system. The network layer only adds:
+The Online layer (`NetworkCharacterBrain`, `ClientPrediction<TInput, TState>`) wraps the offline brain. All movement/combat/vehicle simulation logic lives in the offline system. The network layer only adds:
 - Tick management
 - Input serialization / deserialization
 - Client prediction + server reconciliation
@@ -138,9 +140,22 @@ If a system could ship as a standalone package (character controller, vehicle co
 - Unity 6 + Unity Netcode for GameObjects
 - Transport: Unity Relay (via `RelayManager`)
 - Authority model: server-authoritative with client prediction
+
+### Tick system
+- `WorldSimulation` drives all `ISimulatableEntity` at fixed tick rate (offline and server)
+- `NetworkWorldSimulation` extends it with reconciliation for `IReconcilableEntity`
+- `currentTick` resets to 0 on `OnServerStarted`; client aligns to `LocalTime.Time / fixedDeltaTime` on connect
+- Server characters call `InitializeTick(currentTick)` at spawn so their `pendingTick` starts in the correct tick space
+- `RegisterReconcilable` immediately calls `SaveState(currentTick)` to seed `pendingTick` before any buffered RPCs arrive
+
+### ClientPrediction
 - `ClientPrediction<TInput, TState>` is the generic base — extend it for each controllable type
-- Input payloads must be structs and network-serializable (INetworkSerializable or unmanaged)
-- Reconciliation: client replays all buffered inputs after a mismatch with server state
+- Input and state payloads must be structs implementing `INetworkSerializable`
+- Ring buffers of 128 slots (indexed by `tick % 128`) for both inputs and states
+- State snapshots store their tick so stale buffer slots are detected and discarded
+- Input redundancy: client sends current + previous input each packet to survive single packet loss
+- Server falls back to `lastServerInput` on miss (handles packet loss / reorder)
+- Reconciliation: rewind to earliest diverged tick, replay all buffered inputs; replay writes corrected states back to the buffer
 
 ---
 
@@ -154,6 +169,7 @@ If a system could ship as a standalone package (character controller, vehicle co
 | Data SO fields | PascalCase | `GroundedData.GroundLayer` |
 | Input payloads | `*InputPayload` | `MovementInputPayload` |
 | State payloads | `*BrainStatePayload` | `MovementBrainStatePayload` |
+| Pure C# brain cores | `*BrainCore` | `CharacterBrainCore`, `NetworkCharacterBrainCore` |
 
 ---
 
