@@ -172,7 +172,7 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
         {
             stateBuffer[pendingTick % BufferSize] = snapshot;
 
-            if (owner.IsServer && !owner.IsOwner)
+            if (owner.IsServer /* && !owner.IsOwner*/)
                 OnSendStateCorrection?.Invoke(snapshot, pendingTick);
 
             pendingTick++;
@@ -196,7 +196,10 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
 
     public bool NeedsReconciliation(out int fromTick)
     {
-        if (!hasPendingCorrection || CheckDivergence == null) { fromTick = 0; return false; }
+        if (!hasPendingCorrection || CheckDivergence == null || owner.IsServer) { 
+            fromTick = 0; 
+            return false; 
+        }
 
         hasPendingCorrection = false;
 
