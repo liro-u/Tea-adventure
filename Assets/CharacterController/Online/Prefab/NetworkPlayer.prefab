@@ -112,6 +112,7 @@ MonoBehaviour:
   minPitch: -40
   maxPitch: 80
   smoothTime: 0.05
+  tpsCamera: {fileID: 5328675655563022669}
 --- !u!114 &5923057714844280161
 MonoBehaviour:
   m_ObjectHideFlags: 0
