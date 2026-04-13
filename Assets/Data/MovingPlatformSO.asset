@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: MovingPlatformSO
   m_EditorClassIdentifier: Assembly-CSharp::MovingPlatformSO
   <Speed>k__BackingField: 3
-  <WaitDuration>k__BackingField: 0
+  <WaitDuration>k__BackingField: 1
   <LoopMode>k__BackingField: 1
