@@ -228,6 +228,8 @@ public class ClientPrediction<TInput, TState> : ISimulatableEntity, IReconcilabl
         if (stateBuffer[bufferSlot].Tick != pendingCorrectionTick)
         {
             // Slot has been overwritten with new data, discard this stale correction
+            if (pendingTick - pendingCorrectionTick >= BufferSize)
+                Debug.LogWarning($"[ClientPrediction] Reconciliation skipped: correction tick {pendingCorrectionTick} is {pendingTick - pendingCorrectionTick} ticks behind pendingTick {pendingTick} (buffer size {BufferSize}). The client is too far ahead; consider increasing BufferSize or reducing RTT.", owner);
             fromTick = 0;
             return false;
         }
