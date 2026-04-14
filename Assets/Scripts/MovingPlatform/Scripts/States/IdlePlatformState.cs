@@ -9,10 +9,13 @@ public class IdlePlatformState : MovingPlatformState
 
     public override void Enter()
     {
-        stateMachine.Brain.Motor.ResetVelocity();
-        stateMachine.Brain.StatePayload.IsActivated         = false;
-        stateMachine.Brain.StatePayload.WaypointDirection   = 1;
-        stateMachine.Brain.StatePayload.TargetWaypointIndex = 0;
+        var brain = stateMachine.Brain;
+        brain.Motor.ResetVelocity();
+        brain.StatePayload.IsActivated       = false;
+        brain.StatePayload.WaypointDirection = 1;
+        brain.StatePayload.TargetKnotIndex   = 1;
+        brain.StatePayload.SplineT           = 0f;
+        brain.Motor.PlaceOnSpline(brain.SplinePath, 0f);
     }
 
     public override void Tick(float tickDelta)

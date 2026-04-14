@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3f6401d02528e0140ade5bf4d77b3656, type: 3}
   m_Name: MovingPlatformSO
   m_EditorClassIdentifier: Assembly-CSharp::MovingPlatformSO
-  <Speed>k__BackingField: 3
-  <WaitDuration>k__BackingField: 1
+  <Speed>k__BackingField: 10
+  <WaitDuration>k__BackingField: 5
   <LoopMode>k__BackingField: 1

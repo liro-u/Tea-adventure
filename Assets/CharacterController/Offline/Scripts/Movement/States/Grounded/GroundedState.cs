@@ -33,6 +33,7 @@ public class GroundedState : MovementState
         base.Tick(tickDelta);
 
         stateMachine.movementBrain.movementMotor.StickToGround();
+        stateMachine.movementBrain.movementMotor.InheritPlatformVelocity(tickDelta);
     }
 
     protected virtual void OnMove()

@@ -10,7 +10,8 @@ using UnityEngine;
 public struct MovingPlatformStateSnapshot
 {
     public Vector3               Position;
-    public int                   TargetWaypointIndex;
+    public float                 SplineT;
+    public int                   TargetKnotIndex;
     public int                   WaypointDirection;
     public float                 WaitTimer;
     public bool                  IsActivated;

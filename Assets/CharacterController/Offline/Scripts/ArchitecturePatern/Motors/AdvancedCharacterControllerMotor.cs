@@ -92,6 +92,32 @@ public class AdvancedCharacterControllerMotor : CharacterControllerMotor, IAdvan
             Velocity = new Vector3(Velocity.x, -amountToPull, Velocity.z);
         }
     }
+
+    public Vector3 InheritPlatformVelocity(float tickDelta)
+    {
+        Vector3 capsuleColliderCenterInWorldSpace = characterController.transform.TransformPoint(Center);
+
+        Ray downRay = new Ray(capsuleColliderCenterInWorldSpace, Vector3.down);
+        float rayDistance = stickToGroundRayDistance;
+
+        if (!Physics.Raycast(downRay, out RaycastHit hit, rayDistance, groundLayer, QueryTriggerInteraction.Ignore))
+        {
+            return Vector3.zero;
+        }
+
+        IPlatformVelocityProvider provider = hit.collider.GetComponentInParent<IPlatformVelocityProvider>();
+        if (provider == null)
+        {
+            return Vector3.zero;
+        }
+
+        Vector3 platformVelocity = provider.PlatformVelocity;
+        // Apply platform displacement as a separate move, not by modifying Velocity.
+        // This keeps platform movement independent of character physics.
+        characterController.Move(platformVelocity * tickDelta);
+
+        return platformVelocity;
+    }
     #endregion
 
     protected void onContactWithGroundExited()

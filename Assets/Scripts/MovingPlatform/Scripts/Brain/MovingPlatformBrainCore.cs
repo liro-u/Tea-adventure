@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Splines;
 
 /// <summary>
 /// Pure C# brain for a moving platform — no MonoBehaviour, no NetworkBehaviour.
@@ -24,7 +25,7 @@ public class MovingPlatformBrainCore : ISimulatableEntity, IMovingPlatformBrain,
     public MovingPlatformSO                 PlatformData { get; }
     public IMovingPlatformBrainStatePayload StatePayload { get; set; }
     public MovingPlatformMotor              Motor        { get; }
-    public Transform[]                      Waypoints    { get; }
+    public SplineContainer                  SplinePath   { get; }
 
     private readonly MovingPlatformInputProvider  inputProvider;
     private readonly MovingPlatformStateMachine   stateMachine;
@@ -34,11 +35,11 @@ public class MovingPlatformBrainCore : ISimulatableEntity, IMovingPlatformBrain,
     public MovingPlatformBrainCore(
         Transform        platformTransform,
         MovingPlatformSO platformData,
-        Transform[]      waypoints,
+        SplineContainer  splinePath,
         EventZone        eventZone)
     {
         PlatformData  = platformData;
-        Waypoints     = waypoints;
+        SplinePath    = splinePath;
         StatePayload  = new MovingPlatformBrainStatePayload();
         Motor         = new MovingPlatformMotor(platformTransform);
         inputProvider = new MovingPlatformInputProvider(eventZone);
@@ -83,11 +84,12 @@ public class MovingPlatformBrainCore : ISimulatableEntity, IMovingPlatformBrain,
 
     public void ApplyState(MovingPlatformStateSnapshot state)
     {
-        Motor.Position                      = state.Position;
-        StatePayload.TargetWaypointIndex    = state.TargetWaypointIndex;
-        StatePayload.WaypointDirection      = state.WaypointDirection;
-        StatePayload.WaitTimer              = state.WaitTimer;
-        StatePayload.IsActivated            = state.IsActivated;
+        Motor.Position                 = state.Position;
+        StatePayload.SplineT           = state.SplineT;
+        StatePayload.TargetKnotIndex   = state.TargetKnotIndex;
+        StatePayload.WaypointDirection = state.WaypointDirection;
+        StatePayload.WaitTimer         = state.WaitTimer;
+        StatePayload.IsActivated       = state.IsActivated;
 
         var targetState = StateFromId(state.StateId);
         if (stateMachine.CurrentState != targetState)
@@ -98,12 +100,13 @@ public class MovingPlatformBrainCore : ISimulatableEntity, IMovingPlatformBrain,
 
     private MovingPlatformStateSnapshot TakeSnapshot() => new()
     {
-        Position            = Motor.Position,
-        TargetWaypointIndex = StatePayload.TargetWaypointIndex,
-        WaypointDirection   = StatePayload.WaypointDirection,
-        WaitTimer           = StatePayload.WaitTimer,
-        IsActivated         = StatePayload.IsActivated,
-        StateId             = StateIdFromState(stateMachine.CurrentState),
+        Position          = Motor.Position,
+        SplineT           = StatePayload.SplineT,
+        TargetKnotIndex   = StatePayload.TargetKnotIndex,
+        WaypointDirection = StatePayload.WaypointDirection,
+        WaitTimer         = StatePayload.WaitTimer,
+        IsActivated       = StatePayload.IsActivated,
+        StateId           = StateIdFromState(stateMachine.CurrentState),
     };
 
     private MovingPlatformStateId StateIdFromState(IState state)

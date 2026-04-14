@@ -11,16 +11,15 @@ public class MovingPlatformSO : ScriptableObject
     [Tooltip("Time in seconds the platform pauses at each waypoint. 0 = no pause.")]
     [field: SerializeField] public float           WaitDuration  { get; private set; } = 0f;
 
-    [Tooltip("PingPong: reverses at each end. Loop: wraps back to first waypoint. Neither: stops at last waypoint.")]
+    [Tooltip("PingPong: reverses at each end. OneShot: stops at the last knot.\n" +
+             "For continuous looping, leave this at OneShot and enable Closed on the SplineContainer instead.")]
     [field: SerializeField] public PlatformLoopMode LoopMode     { get; private set; } = PlatformLoopMode.PingPong;
 }
 
 public enum PlatformLoopMode
 {
-    /// <summary>Platform stops at the last waypoint and stays there.</summary>
+    /// <summary>Platform stops at the last knot and stays there.</summary>
     OneShot,
     /// <summary>Platform reverses direction at each end, bouncing back and forth.</summary>
     PingPong,
-    /// <summary>Platform wraps from the last waypoint back to the first.</summary>
-    Loop,
 }
