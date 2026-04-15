@@ -27,8 +27,8 @@ public class MovingPlatformBrainCore : ISimulatableEntity, IMovingPlatformBrain,
     public MovingPlatformMotor              Motor        { get; }
     public SplineContainer                  SplinePath   { get; }
 
-    private readonly MovingPlatformInputProvider  inputProvider;
-    private readonly MovingPlatformStateMachine   stateMachine;
+    protected readonly MovingPlatformInputProvider inputProvider;
+    private   readonly MovingPlatformStateMachine  stateMachine;
 
     // ── Construction ──────────────────────────────────────────────────────────
 
