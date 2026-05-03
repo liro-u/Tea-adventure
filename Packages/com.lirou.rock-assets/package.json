@@ -1,0 +1,18 @@
+{
+  "name": "com.lirou.rock-assets",
+  "version": "1.0.0",
+  "displayName": "Rock Assets",
+  "description": "This package provides a collection of rock assets for use in Unity projects.",
+  "unity": "2022.3",
+  "keywords": [
+    "assets",
+    "models",
+    "rocks",
+    "nature"
+  ],
+  "author": {
+    "name": "valentin noailles",
+    "email": "valentinnoailles@gmail.com",
+    "url": "https://liro-u.onrender.com/#/"
+  }
+}

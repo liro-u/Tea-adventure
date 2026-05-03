@@ -1,0 +1,21 @@
+{
+  "name": "com.lirou.grass-system",
+  "version": "1.0.0",
+  "displayName": "Grass System",
+  "description": "This package provides a grass system made by MinionsArt for use in Unity projects. \n\nThe grass system is designed to be highly customizable, allowing artists and developers to create a wide variety of grass textures and appearances.\n\nThe system utilizes Unity's Shader Graph to achieve realistic grass surfaces with dynamic lighting and shading effects.",
+  "unity": "2022.3",
+  "keywords": [
+    "grass",
+    "materials",
+    "shader graph",
+    "textures"
+  ],
+  "author": {
+    "name": "valentin noailles",
+    "email": "valentinnoailles@gmail.com",
+    "url": "https://liro-u.onrender.com/#/"
+  },
+  "dependencies": {
+    "com.unity.burst": "1.8.24"
+  }
+}

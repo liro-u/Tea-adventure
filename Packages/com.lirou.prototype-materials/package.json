@@ -1,0 +1,18 @@
+{
+  "name": "com.lirou.prototype-materials",
+  "version": "1.0.0",
+  "displayName": "Prototype Materials",
+  "description": "This package provides a collection of prototype materials for use in Unity projects. \n\nThese materials are based on kenney prototype textures",
+  "unity": "2022.3",
+  "keywords": [
+    "prototype",
+    "kennys",
+    "materials",
+    "textures"
+  ],
+  "author": {
+    "name": "valentin noailles",
+    "email": "valentinnoailles@gmail.com",
+    "url": "https://liro-u.onrender.com/#/"
+  }
+}

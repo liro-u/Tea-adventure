@@ -7,6 +7,38 @@
       "dependencies": {},
       "url": "https://packages.unity.com"
     },
+    "com.lirou.grass-system": {
+      "version": "file:com.lirou.grass-system",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {
+        "com.unity.burst": "1.8.24"
+      }
+    },
+    "com.lirou.procedural-cloud-materials": {
+      "version": "file:com.lirou.procedural-cloud-materials",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.lirou.procedural-rock-materials": {
+      "version": "file:com.lirou.procedural-rock-materials",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.lirou.prototype-materials": {
+      "version": "file:com.lirou.prototype-materials",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
+    "com.lirou.rock-assets": {
+      "version": "file:com.lirou.rock-assets",
+      "depth": 0,
+      "source": "embedded",
+      "dependencies": {}
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.9",
       "depth": 0,

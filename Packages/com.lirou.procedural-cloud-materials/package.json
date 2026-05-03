@@ -1,0 +1,19 @@
+{
+  "name": "com.lirou.procedural-cloud-materials",
+  "version": "1.0.0",
+  "displayName": "Procedural Cloud Materials",
+  "description": "This package provides a collection of procedural cloud materials for use in Unity projects. \n\nThese materials are designed to be highly customizable, allowing artists and developers to create a wide variety of cloud textures and appearances.\n\nThe materials utilize Unity's Shader Graph to achieve realistic cloud surfaces with dynamic lighting and shading effects.",
+  "unity": "2022.3",
+  "keywords": [
+    "procedural",
+    "cloud",
+    "materials",
+    "shader graph",
+    "textures"
+  ],
+  "author": {
+    "name": "valentin noailles",
+    "email": "valentinnoailles@gmail.com",
+    "url": "https://liro-u.onrender.com/#/"
+  }
+}

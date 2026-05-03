@@ -30,7 +30,7 @@ MonoBehaviour:
   adjustLength: 0
   adjustWidthMax: 2
   adjustHeightMax: 2
-  reprojectOffset: 1
+  reprojectOffset: 20
   rangeR: 0
   rangeG: 0
   rangeB: 0
@@ -40,10 +40,10 @@ MonoBehaviour:
     m_Bits: 0
   hitMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 63
   paintMask:
     serializedVersion: 2
-    m_Bits: 8
+    m_Bits: 63
   brushSize: 2.1
   brushFalloffSize: 0.8
   Flow: 0.1
